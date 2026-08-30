@@ -26,7 +26,6 @@ import {
   UserPlus,
   Briefcase,
   Building,
-  Key,
 } from "lucide-react";
 
 function SignupContent() {
@@ -36,9 +35,12 @@ function SignupContent() {
 
   const { registerUser, setDemoToast, competencies } = useAppState();
 
-  const [selectedRole, setSelectedRole] = useState<RoleType>(
-    initialRoleParam === "manager" || initialRoleParam === "trainer"
-      ? initialRoleParam
+  // Strictly ONLY Learner, Manager, or Trainer (Admin is permanently removed from public signup)
+  const [selectedRole, setSelectedRole] = useState<"learner" | "manager" | "trainer">(
+    initialRoleParam === "manager"
+      ? "manager"
+      : initialRoleParam === "trainer"
+      ? "trainer"
       : "learner"
   );
 
@@ -50,12 +52,11 @@ function SignupContent() {
   const [department, setDepartment] = useState("Engineering");
   const [jobTitle, setJobTitle] = useState("Junior Software Engineer");
   const [baselineSkillLevel, setBaselineSkillLevel] = useState<number>(1);
-  const [adminSecurityToken, setAdminSecurityToken] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleRoleSelect = (role: RoleType) => {
+  const handleRoleSelect = (role: "learner" | "manager" | "trainer") => {
     setSelectedRole(role);
     setValidationError(null);
     if (role === "learner") {
@@ -67,9 +68,6 @@ function SignupContent() {
     } else if (role === "trainer") {
       setJobTitle("Technical Curriculum Architect");
       setDepartment("Curriculum & Talent Development");
-    } else if (role === "admin") {
-      setJobTitle("Enterprise Learning Administrator");
-      setDepartment("Executive & People Operations");
     }
   };
 
@@ -101,16 +99,6 @@ function SignupContent() {
     if (password !== confirmPassword) {
       setValidationError("Passwords do not match. Please re-enter.");
       return;
-    }
-
-    // ETHICAL SECURITY GUARD: Super Admin creation requires confidential Master Token
-    if (selectedRole === "admin") {
-      if (adminSecurityToken.trim() !== "CC-SUPERADMIN-2026-KEY") {
-        setValidationError(
-          "Access Denied: Super Admin accounts cannot be created publicly. A valid Enterprise Master Token (e.g. CC-SUPERADMIN-2026-KEY) issued by IT Security is required."
-        );
-        return;
-      }
     }
 
     setIsSubmitting(true);
@@ -183,29 +171,16 @@ function SignupContent() {
       ],
     },
     trainer: {
-      title: "L&D Trainer / Creator Account",
-      desc: "Design modular courses, auto-generate quiz assessments with AI, track cohort pass rates, and host live workshops.",
+      title: "L&D Trainer / Instructor Account",
+      desc: "Live mentor connection with enrolled cohorts, AI quiz generator from documentation, course catalog authoring, and workshop sandboxes.",
       badge: "Trainer RBAC",
       badgeColor: "purple" as const,
       color: "from-indigo-500/20 to-cyan-500/10 border-indigo-500/30",
       btnColor: "bg-indigo-600 hover:bg-indigo-500 shadow-indigo-600/30",
       perks: [
+        "Live Cohort Connect & Roster Broadcasts",
         "AI Quiz Generator from raw documentation",
         "Curriculum & learning path authoring",
-        "Virtual lab & live session scheduler",
-      ],
-    },
-    admin: {
-      title: "Super Admin Governance Account",
-      desc: "Requires verified Enterprise Master Security Token to provision Super Admin clearance.",
-      badge: "Super Admin RBAC",
-      badgeColor: "purple" as const,
-      color: "from-violet-500/20 to-indigo-500/10 border-violet-500/30",
-      btnColor: "bg-violet-600 hover:bg-violet-500 shadow-violet-600/30",
-      perks: [
-        "Master Competency Framework editor (L1-L5)",
-        "Enterprise-wide heatmap & ROI analytics",
-        "User directory & role permission control across all accounts",
       ],
     },
   }[selectedRole];
@@ -268,9 +243,9 @@ function SignupContent() {
             </div>
 
             <div className="p-4 rounded-2xl bg-black/40 border border-white/10 text-xs text-neutral-400 space-y-1">
-              <span className="font-bold text-white block">Enterprise Role Enforcement:</span>
+              <span className="font-bold text-white block">Enterprise Role Policy:</span>
               <p className="text-[11px] leading-relaxed">
-                Your permissions and workspace capabilities are strictly established by your registered role clearance. Workspaces cannot be switched without logging out and authenticating as another verified account.
+                Choose your official organizational designation. Super Admin clearance is pre-provisioned via executive LDAP infrastructure and cannot be registered publicly.
               </p>
             </div>
           </div>
@@ -278,62 +253,49 @@ function SignupContent() {
           {/* Right Column: Registration Form (7 Cols) */}
           <div className="lg:col-span-7">
             <div className={`rounded-3xl border bg-[#0b0e18]/95 backdrop-blur-2xl p-8 shadow-2xl space-y-6 ${roleMeta.color}`}>
-              {/* Role Selection Tabs */}
+              {/* Role Selection Tabs (Learner, Manager, Trainer ONLY) */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-neutral-300 uppercase tracking-wider block">
                   Select Role Clearance
                 </label>
-                <div className="grid grid-cols-4 gap-1 p-1 bg-black/40 rounded-2xl border border-white/10">
+                <div className="grid grid-cols-3 gap-1.5 p-1 bg-black/40 rounded-2xl border border-white/10">
                   <button
                     type="button"
                     onClick={() => handleRoleSelect("learner")}
-                    className={`py-2 px-2 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1 ${
+                    className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                       selectedRole === "learner"
                         ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30"
                         : "text-neutral-400 hover:text-white hover:bg-white/5"
                     }`}
                   >
-                    <User className="h-3 w-3" />
+                    <User className="h-3.5 w-3.5" />
                     <span>Learner</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleRoleSelect("manager")}
-                    className={`py-2 px-2 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1 ${
+                    className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                       selectedRole === "manager"
                         ? "bg-cyan-600 text-white shadow-md shadow-cyan-600/30"
                         : "text-neutral-400 hover:text-white hover:bg-white/5"
                     }`}
                   >
-                    <Grid className="h-3 w-3" />
+                    <Grid className="h-3.5 w-3.5" />
                     <span>Manager</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleRoleSelect("trainer")}
-                    className={`py-2 px-2 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1 ${
+                    className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                       selectedRole === "trainer"
                         ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
                         : "text-neutral-400 hover:text-white hover:bg-white/5"
                     }`}
                   >
-                    <GraduationCap className="h-3 w-3" />
+                    <GraduationCap className="h-3.5 w-3.5" />
                     <span>Trainer</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleRoleSelect("admin")}
-                    className={`py-2 px-2 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1 ${
-                      selectedRole === "admin"
-                        ? "bg-violet-600 text-white shadow-md shadow-violet-600/30"
-                        : "text-neutral-400 hover:text-white hover:bg-white/5"
-                    }`}
-                  >
-                    <Building2 className="h-3 w-3" />
-                    <span>Admin</span>
                   </button>
                 </div>
               </div>
@@ -429,27 +391,6 @@ function SignupContent() {
                   </div>
                 </div>
 
-                {/* If Super Admin is selected: Require IT Security Master Token */}
-                {selectedRole === "admin" && (
-                  <div className="space-y-1.5 p-3.5 rounded-2xl bg-violet-950/30 border border-violet-500/30">
-                    <label className="font-bold text-violet-300 flex items-center gap-1.5">
-                      <Key className="h-3.5 w-3.5 text-violet-400" />
-                      Enterprise Master Security Token * (Required for Admin Provisioning)
-                    </label>
-                    <input
-                      type="password"
-                      required
-                      placeholder="Enter IT Security Master Token (e.g. CC-SUPERADMIN-2026-KEY)"
-                      value={adminSecurityToken}
-                      onChange={(e) => setAdminSecurityToken(e.target.value)}
-                      className="w-full bg-black/50 border border-violet-500/40 rounded-xl px-3 py-2 text-white placeholder-neutral-500 focus:outline-none font-mono"
-                    />
-                    <span className="text-[10px] text-neutral-400 block">
-                      Protected authorization control. Only authorized IT personnel with master key can initialize Super Admin status.
-                    </span>
-                  </div>
-                )}
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="font-medium text-neutral-300">Security Password *</label>
@@ -493,7 +434,7 @@ function SignupContent() {
                   <span className="flex items-center gap-1 text-emerald-400">
                     <ShieldCheck className="h-3.5 w-3.5" /> Clean 0% Progression Initialized
                   </span>
-                  <span>Instant RBAC Setup</span>
+                  <span>Instant RBAC Clearance</span>
                 </div>
 
                 <button

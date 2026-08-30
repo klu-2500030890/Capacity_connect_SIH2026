@@ -98,7 +98,9 @@ export interface AppNotification {
   type: "info" | "success" | "warning";
   read: boolean;
   isNudge?: boolean;
+  isTrainerBroadcast?: boolean;
   courseId?: string;
+  actionUrl?: string;
 }
 
 interface AppStateContextType {
@@ -143,6 +145,9 @@ interface AppStateContextType {
   enrollInCourse: (courseId: string) => void;
   nudgeTeamMember: (memberId: string, memberName: string, courseTitle: string) => void;
   nominateMember: (memberId: string, courseId: string) => void;
+  broadcastTrainerAnnouncement: (courseId: string, title: string, message: string) => void;
+  send1on1MentorFeedback: (userId: string, courseId: string, message: string) => void;
+  scheduleLiveLabWorkshop: (newSession: CalendarSession) => void;
   upvoteArticle: (articleId: string) => void;
   askExpertQuestion: (title: string, description: string, competencyId: string) => void;
   bookCalendarSession: (sessionId: string) => void;
@@ -570,6 +575,64 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
   };
 
+  // TWO-WAY TRAINER ACTIONS: Live Cohort Broadcast & 1-on-1 Mentor Guidance
+  const broadcastTrainerAnnouncement = (courseId: string, title: string, message: string) => {
+    const course = courses.find((c) => c.id === courseId);
+    const courseTitle = course?.title || "Technical Course";
+
+    const broadcastNotif: AppNotification = {
+      id: `notif-broadcast-${Date.now()}`,
+      targetUserId: learner.id, // Broadcasts to enrolled learner
+      title: `🔴 Live Trainer Broadcast: ${title}`,
+      message: `Trainer Marcus Vance announced for '${courseTitle}': ${message}`,
+      time: "Just now",
+      type: "info",
+      read: false,
+      isTrainerBroadcast: true,
+      courseId: courseId,
+      actionUrl: `/learner#courses`,
+    };
+
+    setNotifications((prev) => [broadcastNotif, ...prev]);
+
+    setDemoToast({
+      message: `📢 Live announcement broadcasted to all enrolled students for '${courseTitle}'!`,
+      type: "success",
+    });
+  };
+
+  const send1on1MentorFeedback = (userId: string, courseId: string, message: string) => {
+    const targetUser = teamMembers.find((m) => m.id === userId);
+    const course = courses.find((c) => c.id === courseId);
+
+    const mentorNotif: AppNotification = {
+      id: `notif-mentor-${Date.now()}`,
+      targetUserId: userId,
+      title: `👨‍🏫 1:1 Mentor Guidance from Marcus Vance`,
+      message: `For '${course?.title || "Course"}': ${message}`,
+      time: "Just now",
+      type: "info",
+      read: false,
+      isTrainerBroadcast: true,
+      courseId: courseId,
+    };
+
+    setNotifications((prev) => [mentorNotif, ...prev]);
+
+    setDemoToast({
+      message: `📨 1:1 Mentor Guidance sent to ${targetUser?.name || "Learner"}!`,
+      type: "success",
+    });
+  };
+
+  const scheduleLiveLabWorkshop = (newSession: CalendarSession) => {
+    setSessions((prev) => [newSession, ...prev]);
+    setDemoToast({
+      message: `Virtual Workshop '${newSession.title}' scheduled and open for learner seat reservations.`,
+      type: "success",
+    });
+  };
+
   const upvoteArticle = (articleId: string) => {
     setArticles((prev) =>
       prev.map((art) => {
@@ -712,6 +775,9 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         enrollInCourse,
         nudgeTeamMember,
         nominateMember,
+        broadcastTrainerAnnouncement,
+        send1on1MentorFeedback,
+        scheduleLiveLabWorkshop,
         upvoteArticle,
         askExpertQuestion,
         bookCalendarSession,

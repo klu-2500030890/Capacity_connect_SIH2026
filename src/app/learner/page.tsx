@@ -64,6 +64,11 @@ export default function LearnerPortal() {
     (n) => (n.targetUserId === learner.id || n.targetUserId === "usr-alex-learner") && n.isNudge
   );
 
+  // Live Trainer Broadcasts addressed to this learner
+  const liveTrainerBroadcasts = notifications.filter(
+    (n) => (n.targetUserId === learner.id || n.targetUserId === "usr-alex-learner") && n.isTrainerBroadcast
+  );
+
   // Calculate enrolled courses data
   const userEnrollments = enrollments
     .filter((e) => e.userId === learner.id)
@@ -93,6 +98,46 @@ export default function LearnerPortal() {
 
   return (
     <div className="space-y-8 pb-16">
+      {/* 🔴 LIVE TRAINER BROADCAST & MENTOR BRIDGE BANNER (NxtWave / Scaler inspired) */}
+      {liveTrainerBroadcasts.length > 0 && (
+        <div className="space-y-3">
+          {liveTrainerBroadcasts.map((broadcast) => {
+            const course = courses.find((c) => c.id === broadcast.courseId) || courses[0];
+            return (
+              <div
+                key={broadcast.id}
+                className="p-4 sm:p-5 rounded-3xl border border-indigo-500/40 bg-gradient-to-r from-indigo-950/40 via-[#0d0f1a] to-indigo-950/40 backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xl animate-in fade-in duration-300"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="p-2.5 rounded-2xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0">
+                    <Sparkles className="h-5 w-5 text-indigo-400 animate-pulse" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] font-mono uppercase text-indigo-400 font-bold block flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping inline-block" />
+                      {broadcast.title}
+                    </span>
+                    <p className="text-xs text-white font-medium">{broadcast.message}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+                  <button
+                    onClick={() => {
+                      dismissNudge(broadcast.id);
+                      setActiveCourseToPlay(course);
+                    }}
+                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-1.5"
+                  >
+                    <PlayCircle className="h-3.5 w-3.5" /> Join Live Lab / Workbench
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* 🚨 TWO-WAY INTERVENTION: Active Manager Nudge Alert Banner */}
       {pendingNudges.length > 0 && (
         <div className="space-y-3">
