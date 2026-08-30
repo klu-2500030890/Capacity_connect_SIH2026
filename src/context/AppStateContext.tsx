@@ -34,6 +34,7 @@ export interface DemoUserCredentials {
   role: RoleType;
   name: string;
   email: string;
+  contactNumber: string;
   title: string;
   avatar: string;
   department: string;
@@ -46,6 +47,7 @@ export const DEMO_USERS: Record<RoleType, DemoUserCredentials> = {
     role: "learner",
     name: "Alex Rivera",
     email: "alex.rivera@capacityconnect.io",
+    contactNumber: "+1 (555) 349-8291",
     title: "Fullstack Developer (L2)",
     avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
     department: "Engineering",
@@ -56,6 +58,7 @@ export const DEMO_USERS: Record<RoleType, DemoUserCredentials> = {
     role: "manager",
     name: "Sarah Chen",
     email: "sarah.chen@capacityconnect.io",
+    contactNumber: "+1 (555) 782-9012",
     title: "Director of Engineering / People Lead",
     avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
     department: "Engineering Leadership",
@@ -66,6 +69,7 @@ export const DEMO_USERS: Record<RoleType, DemoUserCredentials> = {
     role: "trainer",
     name: "Marcus Vance",
     email: "marcus.vance@capacityconnect.io",
+    contactNumber: "+1 (555) 438-1928",
     title: "Principal L&D Architect & Fellow",
     avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
     department: "Curriculum & Talent Development",
@@ -76,6 +80,7 @@ export const DEMO_USERS: Record<RoleType, DemoUserCredentials> = {
     role: "admin",
     name: "Dr. Elena Rostova",
     email: "elena.rostova@capacityconnect.io",
+    contactNumber: "+1 (555) 901-8374",
     title: "Chief Learning Officer & Super Admin",
     avatar: "https://images.unsplash.com/photo-1580894732444-8ecded7900cd?w=150&auto=format&fit=crop&q=80",
     department: "Executive & People Operations",
@@ -91,7 +96,7 @@ interface AppStateContextType {
   currentProfile: UserProfile;
   isAuthenticated: boolean;
   registeredUsers: UserProfile[];
-  login: (roleOrEmail: string, passwordAttempt?: string) => { success: boolean; error?: string };
+  login: (emailOrContact: string, passwordAttempt?: string) => { success: boolean; error?: string };
   registerUser: (newUser: UserProfile) => void;
   logout: () => void;
   theme: "dark" | "light";
@@ -122,6 +127,7 @@ interface AppStateContextType {
   // Domain Simulation Actions
   passQuizAndLevelUp: (courseId: string, score: number) => void;
   submitAssignment: (courseId: string, assignmentId: string, code: string, passed: boolean) => void;
+  enrollInCourse: (courseId: string) => void;
   nudgeTeamMember: (memberId: string, memberName: string, courseTitle: string) => void;
   nominateMember: (memberId: string, courseId: string) => void;
   upvoteArticle: (articleId: string) => void;
@@ -160,17 +166,9 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [notifications, setNotifications] = useState<any[]>([
     {
       id: "notif-1",
-      title: "Assessment Evaluated: Meta Front-End Architecture",
-      message: "Scored 95%. React & Server Components upgraded to Level 3 on your Skill Radar.",
-      time: "10 min ago",
-      type: "success",
-      read: false,
-    },
-    {
-      id: "notif-2",
-      title: "Live Cloud Lab Scheduled Tomorrow",
-      message: "Virtual Workshop #4: Kubernetes & Istio Failover at 3:00 PM IST.",
-      time: "2 hours ago",
+      title: "Capacity Connect RBAC Engine Initialized",
+      message: "Connected to enterprise LDAP & SSO directory with TLS 1.3 protocol.",
+      time: "Just now",
       type: "info",
       read: false,
     },
@@ -212,32 +210,45 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // -------------------------------------------------------------
   // AUTHENTICATION & REGISTRATION
   // -------------------------------------------------------------
-  const login = (roleOrEmail: string, passwordAttempt?: string): { success: boolean; error?: string } => {
+  const login = (emailOrContact: string, passwordAttempt?: string): { success: boolean; error?: string } => {
+    const cleanInput = emailOrContact.trim().toLowerCase();
+
     // Check if role shortcut
-    if (roleOrEmail === "learner" || roleOrEmail === "manager" || roleOrEmail === "trainer" || roleOrEmail === "admin") {
-      const targetRole = roleOrEmail as RoleType;
+    if (cleanInput === "learner" || cleanInput === "manager" || cleanInput === "trainer" || cleanInput === "admin") {
+      const targetRole = cleanInput as RoleType;
       setRoleState(targetRole);
       setCurrentUser(DEMO_USERS[targetRole]);
+      const matchedProfile = registeredUsers.find((u) => u.role === targetRole) || SEEDED_LEARNER_PROFILE;
+      setCurrentProfile(matchedProfile);
+      if (targetRole === "learner") {
+        setLearner(matchedProfile);
+      }
       setIsAuthenticated(true);
       return { success: true };
     }
 
-    // Lookup user by email in registered users or demo users
+    // Lookup user by email OR contact number
     const matchedUser = registeredUsers.find(
-      (u) => u.email.toLowerCase() === roleOrEmail.toLowerCase()
+      (u) =>
+        u.email.toLowerCase() === cleanInput ||
+        u.contactNumber.replace(/[\s()-]/g, "") === cleanInput.replace(/[\s()-]/g, "")
     );
 
     if (matchedUser) {
       if (passwordAttempt && matchedUser.password && passwordAttempt !== matchedUser.password && passwordAttempt !== "Passcode@2026") {
-        return { success: false, error: "Invalid password for this enterprise account." };
+        return { success: false, error: "Invalid password for this account." };
       }
 
       setRoleState(matchedUser.role);
       setCurrentProfile(matchedUser);
+      if (matchedUser.role === "learner") {
+        setLearner(matchedUser);
+      }
       setCurrentUser({
         role: matchedUser.role,
         name: matchedUser.name,
         email: matchedUser.email,
+        contactNumber: matchedUser.contactNumber,
         title: matchedUser.jobTitle,
         avatar: matchedUser.avatar,
         department: matchedUser.department,
@@ -247,14 +258,16 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return { success: true };
     }
 
-    // Check demo accounts by email
+    // Check demo accounts by email or contact
     const demoEntry = Object.values(DEMO_USERS).find(
-      (d) => d.email.toLowerCase() === roleOrEmail.toLowerCase()
+      (d) =>
+        d.email.toLowerCase() === cleanInput ||
+        d.contactNumber.replace(/[\s()-]/g, "") === cleanInput.replace(/[\s()-]/g, "")
     );
 
     if (demoEntry) {
       if (passwordAttempt && passwordAttempt !== demoEntry.password && passwordAttempt !== "Passcode@2026") {
-        return { success: false, error: "Invalid password for demo account." };
+        return { success: false, error: "Invalid password for account." };
       }
       setRoleState(demoEntry.role);
       setCurrentUser(demoEntry);
@@ -262,25 +275,35 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return { success: true };
     }
 
-    return { success: false, error: "Account not found. Please register on the signup portal." };
+    return { success: false, error: "No account found matching this email or contact number. Please register." };
   };
 
   const registerUser = (newUser: UserProfile) => {
-    setRegisteredUsers((prev) => [...prev, newUser]);
-    setTeamMembers((prev) => [...prev, newUser]);
-    setRoleState(newUser.role);
-    setCurrentProfile(newUser);
-    if (newUser.role === "learner") {
-      setLearner(newUser);
+    // Brand new user: perfectly clean slate with 0 certificates, 0 completed courses
+    const cleanNewUser: UserProfile = {
+      ...newUser,
+      completedCoursesCount: 0,
+      points: 100, // Onboarding starter points
+      streakDays: 1,
+      isNewUser: true,
+    };
+
+    setRegisteredUsers((prev) => [...prev, cleanNewUser]);
+    setTeamMembers((prev) => [...prev, cleanNewUser]);
+    setRoleState(cleanNewUser.role);
+    setCurrentProfile(cleanNewUser);
+    if (cleanNewUser.role === "learner") {
+      setLearner(cleanNewUser);
     }
     setCurrentUser({
-      role: newUser.role,
-      name: newUser.name,
-      email: newUser.email,
-      title: newUser.jobTitle,
-      avatar: newUser.avatar,
-      department: newUser.department,
-      clearanceTag: `${newUser.role.toUpperCase()} Clearance`,
+      role: cleanNewUser.role,
+      name: cleanNewUser.name,
+      email: cleanNewUser.email,
+      contactNumber: cleanNewUser.contactNumber,
+      title: cleanNewUser.jobTitle,
+      avatar: cleanNewUser.avatar,
+      department: cleanNewUser.department,
+      clearanceTag: `${cleanNewUser.role.toUpperCase()} Clearance`,
     });
     setIsAuthenticated(true);
   };
@@ -295,18 +318,39 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   // -------------------------------------------------------------
-  // SIMULATION ACTIONS: Multi-Question Assessment Pass & Skill Radar Sync
+  // SIMULATION ACTIONS: Course Enrollment, Assessment Pass & Skill Radar Sync
   // -------------------------------------------------------------
+  const enrollInCourse = (courseId: string) => {
+    const existing = enrollments.find((e) => e.courseId === courseId && e.userId === learner.id);
+    if (existing) {
+      setDemoToast({ message: "You are already enrolled in this course.", type: "info" });
+      return;
+    }
+
+    const newEnr: Enrollment = {
+      id: `enr-${Date.now()}`,
+      userId: learner.id,
+      courseId,
+      status: "in_progress",
+      progressPercent: 0,
+      completedModuleIds: [],
+      startedAt: new Date().toLocaleDateString(),
+    };
+
+    setEnrollments((prev) => [newEnr, ...prev]);
+    setDemoToast({ message: "Enrolled in course! Progress tracker initialized at 0%.", type: "success" });
+  };
+
   const passQuizAndLevelUp = (courseId: string, score: number) => {
     const targetCourse = courses.find((c) => c.id === courseId);
     if (!targetCourse) return;
 
     // 1. Update Enrollment to completed with score
     setEnrollments((prev) => {
-      const existing = prev.find((e) => e.courseId === courseId);
+      const existing = prev.find((e) => e.courseId === courseId && e.userId === learner.id);
       if (existing) {
         return prev.map((e) =>
-          e.courseId === courseId
+          e.courseId === courseId && e.userId === learner.id
             ? {
                 ...e,
                 status: "completed",
@@ -334,7 +378,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
     });
 
-    // 2. Update Learner Competencies dynamically
+    // 2. Update Learner Competencies dynamically on radar
     setLearner((prev) => {
       const updatedComps = prev.competencies.map((comp) => {
         if (targetCourse.competencyIds.includes(comp.competencyId)) {
@@ -342,7 +386,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             ...comp,
             currentLevel: Math.max(comp.currentLevel, targetCourse.competencyGainLevel),
             lastAssessedAt: "Just now",
-            verifiedBy: `${targetCourse.provider} Assessment Engine`,
+            verifiedBy: `${targetCourse.provider} Certification Engine`,
             scorePercent: score,
           };
         }
@@ -357,7 +401,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       };
     });
 
-    // 3. Issue Cryptographic Certificate
+    // 3. Issue Cryptographic Certificate specifically for this active learner
     const newCertCode = `CERT-CC-${Math.floor(10000 + Math.random() * 90000)}`;
     const newCert: CertificateItem = {
       id: `cert-${Date.now()}`,
@@ -378,7 +422,21 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     setCertificates((prev) => [newCert, ...prev]);
 
-    // 4. Dispatch celebratory notification
+    // 4. Issue Badge if honors
+    if (score >= 90 && targetCourse.badgeEarned) {
+      const newBadge: BadgeItem = {
+        id: `bdg-${Date.now()}`,
+        title: targetCourse.badgeEarned,
+        description: `Passed ${targetCourse.title} with honors score of ${score}%.`,
+        iconName: "Award",
+        category: "assessment",
+        earnedAt: "Just now",
+        rarity: "Epic",
+      };
+      setBadges((prev) => [newBadge, ...prev]);
+    }
+
+    // 5. Dispatch celebratory notification
     setDemoToast({
       message: `🎉 Assessment Passed (${score}%)! Competencies updated to Level ${targetCourse.competencyGainLevel} on your Skill Radar. +250 XP earned.`,
       type: "success",
@@ -400,7 +458,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const submitAssignment = (courseId: string, assignmentId: string, code: string, passed: boolean) => {
     setEnrollments((prev) =>
       prev.map((e) =>
-        e.courseId === courseId
+        e.courseId === courseId && e.userId === learner.id
           ? {
               ...e,
               assignmentSubmission: code,
@@ -556,11 +614,15 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const simulateScenario = (scenarioName: string) => {
     if (scenarioName === "level_up") {
-      passQuizAndLevelUp("crs-k8s-prod", 95);
+      passQuizAndLevelUp("crs-gcp-pca", 95);
     } else if (scenarioName === "nudge") {
-      nudgeTeamMember("usr-devon", "Devon Reed", "Production Kubernetes");
+      nudgeTeamMember("usr-devon", "Devon Reed", "Google Cloud PCA");
     }
   };
+
+  // Scoped certificates and badges strictly for the current logged in profile
+  const userCertificates = certificates.filter((c) => c.userId === currentProfile.id || c.recipientName === currentProfile.name);
+  const userBadges = currentProfile.isNewUser ? [] : badges;
 
   return (
     <AppStateContext.Provider
@@ -585,8 +647,8 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         enrollments,
         articles,
         questions,
-        certificates,
-        badges,
+        certificates: userCertificates,
+        badges: userBadges,
         sessions,
         notifications,
         markNotificationAsRead,
@@ -596,6 +658,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setDemoToast,
         passQuizAndLevelUp,
         submitAssignment,
+        enrollInCourse,
         nudgeTeamMember,
         nominateMember,
         upvoteArticle,

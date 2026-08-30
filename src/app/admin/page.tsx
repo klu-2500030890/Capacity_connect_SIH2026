@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useAppState } from "@/context/AppStateContext";
+import { useAppState, RoleType } from "@/context/AppStateContext";
 import { Badge } from "@/components/ui/Badge";
 import { CompetencyHeatmap } from "@/components/competency/CompetencyHeatmap";
 import {
@@ -16,16 +16,35 @@ import {
   Award,
   Layers,
   Search,
+  Phone,
+  Mail,
+  Filter,
+  CheckCircle2,
+  UserCheck,
 } from "lucide-react";
 
 export default function AdminPortal() {
-  const { competencies, jobRoles, teamMembers, courses } = useAppState();
+  const { competencies, jobRoles, teamMembers, registeredUsers, courses } = useAppState();
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [directorySearch, setDirectorySearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("All");
 
   const filteredCompetencies = competencies.filter(
     (c) => selectedCategory === "All" || c.category === selectedCategory
   );
+
+  const allAccounts = registeredUsers || teamMembers;
+
+  const filteredUsers = allAccounts.filter((u) => {
+    const matchesRole = roleFilter === "All" || u.role === roleFilter;
+    const matchesSearch =
+      u.name.toLowerCase().includes(directorySearch.toLowerCase()) ||
+      u.email.toLowerCase().includes(directorySearch.toLowerCase()) ||
+      (u.contactNumber && u.contactNumber.includes(directorySearch)) ||
+      u.department.toLowerCase().includes(directorySearch.toLowerCase()) ||
+      u.jobTitle.toLowerCase().includes(directorySearch.toLowerCase());
+    return matchesRole && matchesSearch;
+  });
 
   return (
     <div className="space-y-8 pb-16">
@@ -38,19 +57,19 @@ export default function AdminPortal() {
               Enterprise Competency Governance & ROI
             </h1>
             <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed">
-              Define organization-wide skill frameworks (Levels 1–5), govern job role benchmarks, monitor cross-department competency heatmaps, and audit training effectiveness.
+              Super Admin authority to audit all registered enterprise accounts (Learners, Managers, Trainers), govern Level 1–5 competency scales, inspect cross-department skill matrices, and analyze training ROI.
             </p>
           </div>
 
           {/* Org KPI Summary */}
           <div className="flex items-center gap-3">
             <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 text-center min-w-[95px]">
-              <span className="text-[10px] font-mono text-neutral-400 uppercase block">Employees</span>
-              <span className="text-xl font-black text-white">25 Active</span>
+              <span className="text-[10px] font-mono text-neutral-400 uppercase block">Total Accounts</span>
+              <span className="text-xl font-black text-white">{allAccounts.length} Active</span>
             </div>
             <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 text-center min-w-[95px]">
               <span className="text-[10px] font-mono text-neutral-400 uppercase block">Framework</span>
-              <span className="text-xl font-black text-violet-400">15 Skills</span>
+              <span className="text-xl font-black text-violet-400">{competencies.length} Skills</span>
             </div>
             <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 text-center min-w-[95px]">
               <span className="text-[10px] font-mono text-neutral-400 uppercase block">Org ROI</span>
@@ -60,8 +79,128 @@ export default function AdminPortal() {
         </div>
       </div>
 
+      {/* Global User Directory & RBAC Audit Section */}
+      <section id="directory" className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <span className="text-[10px] font-mono uppercase text-indigo-400 font-bold">
+              Super Admin Governance
+            </span>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <Users className="h-5 w-5 text-indigo-400" />
+              Global User Directory & Role-Based Access Control Audit
+            </h2>
+          </div>
+
+          {/* Filters & Search */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-500" />
+              <input
+                type="text"
+                placeholder="Search by name, email, phone..."
+                value={directorySearch}
+                onChange={(e) => setDirectorySearch(e.target.value)}
+                className="bg-white/[0.04] border border-white/10 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-indigo-500 font-mono w-48 sm:w-64"
+              />
+            </div>
+
+            <div className="flex items-center gap-1 p-1 bg-black/40 rounded-xl border border-white/10 text-xs">
+              {["All", "learner", "manager", "trainer", "admin"].map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setRoleFilter(r)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold capitalize transition-all ${
+                    roleFilter === r
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "text-neutral-400 hover:text-white"
+                  }`}
+                >
+                  {r === "All" ? "All Roles" : r}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-white/10 bg-[#090b14]/90 overflow-hidden shadow-2xl">
+          <div className="divide-y divide-white/5">
+            {filteredUsers.map((user) => (
+              <div
+                key={user.id}
+                className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-white/[0.02] transition-colors"
+              >
+                {/* User Identity & Contact */}
+                <div className="flex items-center gap-3.5">
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="w-10 h-10 rounded-full object-cover border border-white/10"
+                  />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-white">{user.name}</span>
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
+                          user.role === "admin"
+                            ? "bg-violet-500/20 text-violet-300 border border-violet-500/30"
+                            : user.role === "manager"
+                            ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                            : user.role === "trainer"
+                            ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
+                            : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                        }`}
+                      >
+                        {user.role}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-400 font-mono mt-0.5">
+                      <span className="flex items-center gap-1">
+                        <Mail className="h-3 w-3 text-neutral-500" />
+                        {user.email}
+                      </span>
+                      {user.contactNumber && (
+                        <span className="flex items-center gap-1 text-neutral-300">
+                          <Phone className="h-3 w-3 text-emerald-400" />
+                          {user.contactNumber}
+                        </span>
+                      )}
+                      <span>•</span>
+                      <span>{user.department}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Job Title & Verified Metrics */}
+                <div className="flex items-center gap-4 text-xs font-mono">
+                  <div className="text-right hidden sm:block">
+                    <span className="text-white font-semibold block">{user.jobTitle}</span>
+                    <span className="text-[10px] text-neutral-500">{user.employeeId}</span>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 text-center min-w-[75px]">
+                    <span className="text-[9px] text-neutral-500 uppercase block">XP</span>
+                    <span className="text-xs font-bold text-emerald-400">{user.points}</span>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 text-center min-w-[75px]">
+                    <span className="text-[9px] text-neutral-500 uppercase block">Certs</span>
+                    <span className="text-xs font-bold text-white">{user.completedCoursesCount}</span>
+                  </div>
+
+                  <span className="px-2.5 py-1 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] flex items-center gap-1 font-bold">
+                    <UserCheck className="h-3 w-3" /> RBAC Active
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Master Competency Framework Editor */}
-      <section id="framework" className="space-y-4">
+      <section id="framework" className="space-y-4 pt-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <span className="text-[10px] font-mono uppercase text-violet-400 font-bold">
@@ -74,7 +213,7 @@ export default function AdminPortal() {
           </div>
 
           <div className="flex items-center gap-1.5 overflow-x-auto text-xs">
-            {["All", "Cloud & Infrastructure", "Software Engineering", "Product & Agile", "Leadership & Collaboration"].map((cat) => (
+            {["All", "Cloud & Infrastructure", "Software Engineering", "Product & Agile", "Leadership & Collaboration", "Enterprise Storage & Security"].map((cat) => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
@@ -137,52 +276,9 @@ export default function AdminPortal() {
         </div>
 
         <CompetencyHeatmap
-          members={teamMembers}
+          members={allAccounts}
           competencies={competencies}
         />
-      </section>
-
-      {/* User Directory */}
-      <section id="directory" className="space-y-4 pt-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-mono uppercase text-indigo-400 font-bold">
-              Enterprise Talent Roster
-            </span>
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Users className="h-5 w-5 text-indigo-400" />
-              Employee Directory & Role Mapping
-            </h2>
-          </div>
-        </div>
-
-        <div className="rounded-3xl border border-white/10 bg-[#090b14]/90 overflow-hidden">
-          <div className="divide-y divide-white/5">
-            {teamMembers.map((user) => (
-              <div key={user.id} className="p-4 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
-                <div className="flex items-center gap-3">
-                  <img
-                    src={user.avatar}
-                    alt={user.name}
-                    className="w-9 h-9 rounded-full object-cover border border-white/10"
-                  />
-                  <div>
-                    <span className="text-xs font-bold text-white block">{user.name}</span>
-                    <span className="text-[10px] text-neutral-400">{user.email}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-6 text-xs">
-                  <span className="text-indigo-400 font-mono hidden sm:inline">{user.jobTitle}</span>
-                  <span className="text-emerald-400 font-mono font-bold">{user.points} XP</span>
-                  <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-mono">
-                    {user.completedCoursesCount} Certs
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       </section>
     </div>
   );

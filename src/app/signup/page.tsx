@@ -12,6 +12,7 @@ import {
   Building2,
   Lock,
   Mail,
+  Phone,
   ArrowRight,
   ShieldCheck,
   CheckCircle2,
@@ -44,10 +45,12 @@ function SignupContent() {
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [contactNumber, setContactNumber] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [department, setDepartment] = useState("Engineering");
   const [jobTitle, setJobTitle] = useState("Junior Software Engineer");
-  const [baselineSkillLevel, setBaselineSkillLevel] = useState<number>(2);
+  const [baselineSkillLevel, setBaselineSkillLevel] = useState<number>(1);
   const [showPassword, setShowPassword] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -75,29 +78,37 @@ function SignupContent() {
     setValidationError(null);
     if (role === "learner") {
       setFullName("Maya Patel");
-      setEmail("maya.patel@capacityconnect.io");
+      setEmail("maya.patel@google.com");
+      setContactNumber("+1 (555) 492-8102");
       setDepartment("Engineering");
-      setJobTitle("Fullstack Developer (L2)");
+      setJobTitle("Cloud Software Engineer");
       setPassword("Passcode@2026");
-      setBaselineSkillLevel(3);
+      setConfirmPassword("Passcode@2026");
+      setBaselineSkillLevel(1);
     } else if (role === "manager") {
       setFullName("David Miller");
-      setEmail("david.miller@capacityconnect.io");
+      setEmail("david.miller@dell.com");
+      setContactNumber("+1 (555) 782-9012");
       setDepartment("Product & Design");
-      setJobTitle("Director of Product & Engineering");
+      setJobTitle("Director of Systems Engineering");
       setPassword("Passcode@2026");
+      setConfirmPassword("Passcode@2026");
     } else if (role === "trainer") {
       setFullName("Clara Hughes");
-      setEmail("clara.hughes@capacityconnect.io");
+      setEmail("clara.hughes@microsoft.com");
+      setContactNumber("+1 (555) 321-7890");
       setDepartment("Curriculum & Talent Development");
-      setJobTitle("Lead L&D Specialist");
+      setJobTitle("Lead Azure L&D Architect");
       setPassword("Passcode@2026");
+      setConfirmPassword("Passcode@2026");
     } else {
       setFullName("Arthur Vance");
-      setEmail("arthur.vance@capacityconnect.io");
+      setEmail("arthur.vance@enterprise.io");
+      setContactNumber("+1 (555) 901-8374");
       setDepartment("Executive & People Operations");
       setJobTitle("Chief People Officer");
       setPassword("Passcode@2026");
+      setConfirmPassword("Passcode@2026");
     }
   };
 
@@ -107,12 +118,17 @@ function SignupContent() {
 
     // Strict Field Validations
     if (!fullName.trim() || fullName.trim().length < 3) {
-      setValidationError("Please provide a valid full name (minimum 3 characters).");
+      setValidationError("Please enter your full official name (minimum 3 characters).");
       return;
     }
 
     if (!email.trim() || !email.includes("@") || !email.includes(".")) {
-      setValidationError("Please enter a valid corporate or enterprise email address.");
+      setValidationError("Please enter a valid corporate enterprise email address.");
+      return;
+    }
+
+    if (!contactNumber.trim() || contactNumber.trim().length < 7) {
+      setValidationError("Please enter a valid contact phone number with country code.");
       return;
     }
 
@@ -121,15 +137,21 @@ function SignupContent() {
       return;
     }
 
+    if (password !== confirmPassword) {
+      setValidationError("Passwords do not match. Please re-enter.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     setTimeout(() => {
-      // Build real user profile
+      // Clean pristine account: 0 completed courses, 0 pre-populated certificates
       const newUserId = `usr-${Date.now()}`;
       const newUser: UserProfile = {
         id: newUserId,
         name: fullName.trim(),
         email: email.trim().toLowerCase(),
+        contactNumber: contactNumber.trim(),
         password: password,
         avatar: `https://images.unsplash.com/photo-${1534528741775 + Math.floor(Math.random() * 1000)}?w=150&auto=format&fit=crop&q=80`,
         role: selectedRole,
@@ -138,22 +160,23 @@ function SignupContent() {
         jobTitle,
         organization: "Capacity Connect Enterprise",
         employeeId: `EMP-${department.slice(0, 3).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
-        points: 500,
+        points: 100, // Onboarding starter points
         streakDays: 1,
         completedCoursesCount: 0,
+        isNewUser: true,
         competencies: competencies.slice(0, 6).map((c) => ({
           competencyId: c.id,
           currentLevel: Math.max(1, baselineSkillLevel),
-          lastAssessedAt: "Initial Setup",
+          lastAssessedAt: "Baseline Initialized",
           verifiedBy: "Self-Reported Baseline",
-          scorePercent: 70,
+          scorePercent: 0,
         })),
       };
 
       registerUser(newUser);
 
       setDemoToast({
-        message: `Account created for ${newUser.name}! Your ${selectedRole.toUpperCase()} workspace is now provisioned.`,
+        message: `Account created for ${newUser.name}! Your ${selectedRole.toUpperCase()} workspace is now provisioned with clean 0% progression.`,
         type: "success",
       });
 
@@ -172,7 +195,7 @@ function SignupContent() {
       perks: [
         "Live 1-5 Skill Radar baseline mapping",
         "Personalized AI Career Gap Advisor",
-        "Auto-issued cryptographic certificates",
+        "Auto-issued cryptographic certificates upon course completion",
       ],
     },
     manager: {
@@ -211,7 +234,7 @@ function SignupContent() {
       perks: [
         "Master Competency Framework editor (L1-L5)",
         "Enterprise-wide heatmap & ROI analytics",
-        "User directory & role permission control",
+        "User directory & role permission control across all accounts",
       ],
     },
   }[selectedRole];
@@ -276,7 +299,7 @@ function SignupContent() {
             {/* 1-Click Fast Pre-Fill */}
             <div className="pt-4 border-t border-white/10 space-y-2">
               <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 block">
-                1-Click Fast Sample Pre-Fill:
+                1-Click Sample Pre-Fill:
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <button
@@ -284,7 +307,7 @@ function SignupContent() {
                   onClick={() => handlePreFill("learner")}
                   className="p-2 rounded-xl bg-white/[0.02] hover:bg-emerald-500/20 text-neutral-300 hover:text-emerald-300 border border-white/5 text-left text-[11px] font-semibold transition-all"
                 >
-                  <span className="text-[9px] text-neutral-500 block">Learner</span>
+                  <span className="text-[9px] text-neutral-500 block">Google Learner</span>
                   Maya P.
                 </button>
                 <button
@@ -292,7 +315,7 @@ function SignupContent() {
                   onClick={() => handlePreFill("manager")}
                   className="p-2 rounded-xl bg-white/[0.02] hover:bg-cyan-500/20 text-neutral-300 hover:text-cyan-300 border border-white/5 text-left text-[11px] font-semibold transition-all"
                 >
-                  <span className="text-[9px] text-neutral-500 block">Manager</span>
+                  <span className="text-[9px] text-neutral-500 block">Dell Manager</span>
                   David M.
                 </button>
                 <button
@@ -300,7 +323,7 @@ function SignupContent() {
                   onClick={() => handlePreFill("trainer")}
                   className="p-2 rounded-xl bg-white/[0.02] hover:bg-indigo-500/20 text-neutral-300 hover:text-indigo-300 border border-white/5 text-left text-[11px] font-semibold transition-all"
                 >
-                  <span className="text-[9px] text-neutral-500 block">Trainer</span>
+                  <span className="text-[9px] text-neutral-500 block">MSFT Trainer</span>
                   Clara H.
                 </button>
                 <button
@@ -387,10 +410,10 @@ function SignupContent() {
               )}
 
               {/* Signup Form */}
-              <form onSubmit={handleSignupSubmit} className="space-y-4 text-xs">
+              <form onSubmit={handleSignupSubmit} className="space-y-3.5 text-xs">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="font-medium text-neutral-300">Full Name</label>
+                    <label className="font-medium text-neutral-300">Full Official Name *</label>
                     <div className="relative">
                       <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-500" />
                       <input
@@ -405,18 +428,33 @@ function SignupContent() {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="font-medium text-neutral-300">Enterprise Corporate Email</label>
+                    <label className="font-medium text-neutral-300">Contact / Phone Number *</label>
                     <div className="relative">
-                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-500" />
+                      <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-500" />
                       <input
-                        type="email"
+                        type="tel"
                         required
-                        placeholder="name@company.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="+1 (555) 492-8102"
+                        value={contactNumber}
+                        onChange={(e) => setContactNumber(e.target.value)}
                         className="w-full bg-white/[0.04] border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-neutral-500 focus:outline-none focus:border-indigo-500 font-mono"
                       />
                     </div>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-medium text-neutral-300">Enterprise Email Address *</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-500" />
+                    <input
+                      type="email"
+                      required
+                      placeholder="name@company.com (e.g. google.com, dell.com)"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full bg-white/[0.04] border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-neutral-500 focus:outline-none focus:border-indigo-500 font-mono"
+                    />
                   </div>
                 </div>
 
@@ -440,7 +478,7 @@ function SignupContent() {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="font-medium text-neutral-300">Job Title / Designation</label>
+                    <label className="font-medium text-neutral-300">Job Title / Role</label>
                     <div className="relative">
                       <Briefcase className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-500" />
                       <input
@@ -454,57 +492,50 @@ function SignupContent() {
                   </div>
                 </div>
 
-                {selectedRole === "learner" && (
-                  <div className="space-y-1.5 p-3 rounded-2xl bg-black/40 border border-white/10">
-                    <div className="flex items-center justify-between">
-                      <label className="font-medium text-neutral-300">
-                        Self-Assessed Baseline Skill Level
-                      </label>
-                      <span className="font-mono text-emerald-400 font-bold">
-                        Level {baselineSkillLevel} / 5
-                      </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="font-medium text-neutral-300">Security Password *</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-500" />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        required
+                        placeholder="Min 6 characters"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full bg-white/[0.04] border border-white/10 rounded-xl pl-9 pr-10 py-2.5 text-white placeholder-neutral-500 focus:outline-none focus:border-indigo-500 font-mono"
+                      />
                     </div>
-                    <input
-                      type="range"
-                      min={1}
-                      max={5}
-                      value={baselineSkillLevel}
-                      onChange={(e) => setBaselineSkillLevel(Number(e.target.value))}
-                      className="w-full accent-emerald-500 cursor-pointer"
-                    />
-                    <span className="text-[10px] text-neutral-500 block">
-                      Initializes your live Skill Radar polygon across 6 baseline competencies.
-                    </span>
                   </div>
-                )}
 
-                <div className="space-y-1">
-                  <label className="font-medium text-neutral-300">Security Password (Min 6 Chars)</label>
-                  <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-500" />
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      required
-                      placeholder="Enter strong password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-white/[0.04] border border-white/10 rounded-xl pl-9 pr-10 py-2.5 text-white placeholder-neutral-500 focus:outline-none focus:border-indigo-500 font-mono"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white"
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
+                  <div className="space-y-1">
+                    <label className="font-medium text-neutral-300">Confirm Password *</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-500" />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        required
+                        placeholder="Re-enter password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full bg-white/[0.04] border border-white/10 rounded-xl pl-9 pr-10 py-2.5 text-white placeholder-neutral-500 focus:outline-none focus:border-indigo-500 font-mono"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between text-[11px] text-neutral-400 pt-1">
                   <span className="flex items-center gap-1 text-emerald-400">
-                    <ShieldCheck className="h-3.5 w-3.5" /> Enterprise RBAC Policy Compliant
+                    <ShieldCheck className="h-3.5 w-3.5" /> Clean 0% Progression Initialized
                   </span>
-                  <span>Instant Account Provisioning</span>
+                  <span>Instant RBAC Setup</span>
                 </div>
 
                 <button
@@ -514,7 +545,7 @@ function SignupContent() {
                 >
                   <UserPlus className="h-4 w-4" />
                   {isSubmitting
-                    ? "Provisioning Account & Generating Skill Radar..."
+                    ? "Provisioning Account & Generating Clean Progression..."
                     : `Create & Initialize ${roleMeta.title}`}
                   <ArrowRight className="h-4 w-4" />
                 </button>

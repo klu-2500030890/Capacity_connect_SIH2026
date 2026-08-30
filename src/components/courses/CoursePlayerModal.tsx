@@ -320,6 +320,27 @@ service:
                     </div>
                   )}
                 </div>
+
+                <div className="pt-6 border-t border-white/10 flex items-center justify-between">
+                  <button
+                    onClick={() => setActiveModuleIndex(Math.max(0, activeModuleIndex - 1))}
+                    className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 text-xs font-semibold transition-all"
+                  >
+                    ← Back: {course.modules[activeModuleIndex - 1]?.title || "Previous Module"}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (activeModuleIndex < course.modules.length - 1) {
+                        setActiveModuleIndex(activeModuleIndex + 1);
+                      }
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/25 transition-all flex items-center gap-2"
+                  >
+                    Next: {course.modules[activeModuleIndex + 1]?.title || "Take Assessment"}
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             )}
 
@@ -414,17 +435,26 @@ service:
 
                 {/* Score Banner & Action */}
                 {!isQuizSubmitted ? (
-                  <div className="pt-4 border-t border-white/10 flex items-center justify-between">
-                    <span className="text-xs text-neutral-400">
-                      Answered: {Object.keys(selectedAnswers).length} / {quizQuestions.length}
-                    </span>
+                  <div className="pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
                     <button
-                      onClick={handleGradeQuiz}
-                      disabled={Object.keys(selectedAnswers).length < quizQuestions.length}
-                      className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2"
+                      onClick={() => setActiveModuleIndex(Math.max(0, activeModuleIndex - 1))}
+                      className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300 text-xs font-semibold transition-all"
                     >
-                      Submit & Grade Assessment <ArrowRight className="h-4 w-4" />
+                      ← Back: {course.modules[activeModuleIndex - 1]?.title || "Practical Lab"}
                     </button>
+
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-neutral-400">
+                        Answered: {Object.keys(selectedAnswers).length} / {quizQuestions.length}
+                      </span>
+                      <button
+                        onClick={handleGradeQuiz}
+                        disabled={Object.keys(selectedAnswers).length < quizQuestions.length}
+                        className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2"
+                      >
+                        Submit & Grade Assessment <ArrowRight className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <div className="p-5 rounded-2xl bg-black/60 border border-white/10 flex flex-wrap items-center justify-between gap-4 animate-in fade-in duration-300">

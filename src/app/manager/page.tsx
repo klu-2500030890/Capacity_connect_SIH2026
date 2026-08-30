@@ -24,6 +24,7 @@ import {
 export default function ManagerPortal() {
   const {
     teamMembers,
+    currentProfile,
     competencies,
     courses,
     enrollments,
@@ -31,8 +32,12 @@ export default function ManagerPortal() {
     nominateMember,
   } = useAppState();
 
+  const directReports = teamMembers.filter((m) => m.role === "learner");
+
   const [selectedCourseForNomination, setSelectedCourseForNomination] = useState(courses[0].id);
-  const [selectedMemberForNomination, setSelectedMemberForNomination] = useState(teamMembers[0].id);
+  const [selectedMemberForNomination, setSelectedMemberForNomination] = useState(
+    directReports[0]?.id || teamMembers[0].id
+  );
 
   const handleNominateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +48,7 @@ export default function ManagerPortal() {
   const overdueEnrollments = enrollments
     .filter((e) => e.status === "overdue" || (e.status === "in_progress" && e.progressPercent < 40))
     .map((e) => {
-      const member = teamMembers.find((m) => m.id === e.userId);
+      const member = directReports.find((m) => m.id === e.userId);
       const course = courses.find((c) => c.id === e.courseId);
       return { ...e, member, course };
     })
@@ -102,7 +107,7 @@ export default function ManagerPortal() {
         </div>
 
         <CompetencyHeatmap
-          members={teamMembers}
+          members={directReports}
           competencies={competencies}
           onNudgeMember={(memberId, memberName, compName) =>
             nudgeTeamMember(memberId, memberName, compName)

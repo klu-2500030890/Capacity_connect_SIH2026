@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { JobRole, UserProfile, Competency, Course } from "@/data/capacityData";
+import { JobRole, UserProfile, Competency, Course, SEEDED_JOB_ROLES } from "@/data/capacityData";
 import { Badge } from "@/components/ui/Badge";
 import {
   Sparkles,
@@ -19,23 +19,31 @@ import {
 
 interface SkillGapAdvisorProps {
   user: UserProfile;
-  jobRoles: JobRole[];
+  jobRoles?: JobRole[];
   competencies: Competency[];
   courses: Course[];
+  targetRole?: JobRole;
+  onStartCourse?: (courseId: string) => void;
   onEnrollPath?: (courseIds: string[]) => void;
 }
 
 export const SkillGapAdvisor: React.FC<SkillGapAdvisorProps> = ({
   user,
-  jobRoles,
+  jobRoles = SEEDED_JOB_ROLES,
   competencies,
   courses,
+  targetRole,
+  onStartCourse,
   onEnrollPath,
 }) => {
-  const [selectedRoleId, setSelectedRoleId] = useState<string>("role-sr-cloud-arch");
+  const rolesList = jobRoles && jobRoles.length > 0 ? jobRoles : SEEDED_JOB_ROLES;
+  const [selectedRoleId, setSelectedRoleId] = useState<string>(
+    targetRole?.id || "role-sr-cloud-arch"
+  );
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
-  const selectedRole = jobRoles.find((r) => r.id === selectedRoleId) || jobRoles[1];
+  const selectedRole =
+    rolesList.find((r) => r.id === selectedRoleId) || rolesList[0] || SEEDED_JOB_ROLES[0];
 
   // Compute Gaps
   const gapAnalysis = selectedRole.requiredCompetencies.map((req) => {

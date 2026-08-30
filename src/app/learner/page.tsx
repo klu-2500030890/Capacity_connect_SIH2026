@@ -24,6 +24,9 @@ import {
   ShieldCheck,
   Share2,
   ExternalLink,
+  Milestone,
+  Check,
+  Layers,
 } from "lucide-react";
 
 export default function LearnerPortal() {
@@ -32,6 +35,7 @@ export default function LearnerPortal() {
     competencies,
     jobRoles,
     courses,
+    learningPaths,
     enrollments,
     articles,
     questions,
@@ -40,6 +44,7 @@ export default function LearnerPortal() {
     sessions,
     passQuizAndLevelUp,
     submitAssignment,
+    enrollInCourse,
     upvoteArticle,
     askExpertQuestion,
     addNewArticle,
@@ -69,6 +74,11 @@ export default function LearnerPortal() {
             <div className="flex items-center gap-2">
               <Badge variant="success" size="sm" dot>Active Learner</Badge>
               <span className="text-xs text-neutral-400 font-mono">ID: {learner.id}</span>
+              {learner.contactNumber && (
+                <span className="text-xs text-neutral-400 font-mono hidden sm:inline">
+                  • {learner.contactNumber}
+                </span>
+              )}
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
               Welcome back, {learner.name}
@@ -98,7 +108,7 @@ export default function LearnerPortal() {
               <span className="flex items-center justify-center gap-1 text-[10px] font-bold text-indigo-400 uppercase">
                 <Award className="h-3.5 w-3.5" /> Certified
               </span>
-              <span className="text-xl font-black text-white">{learner.completedCoursesCount}</span>
+              <span className="text-xl font-black text-white">{certificates.length}</span>
             </div>
           </div>
         </div>
@@ -133,7 +143,7 @@ export default function LearnerPortal() {
         <div className="lg:col-span-6 space-y-3">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-bold text-white">Active Verified Competencies</h3>
-            <span className="text-xs text-neutral-400 font-mono">11 Assessed Skills</span>
+            <span className="text-xs text-neutral-400 font-mono">{learner.competencies.length} Assessed Skills</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -182,21 +192,93 @@ export default function LearnerPortal() {
         </div>
       </section>
 
-      {/* DIFFERENTIATOR: AI Skill Gap Advisor */}
-      <section id="advisor" className="pt-4">
+      {/* PILLAR 1: AI Skill Gap Advisor */}
+      <section id="advisor">
         <SkillGapAdvisor
           user={learner}
           jobRoles={jobRoles}
+          targetRole={targetRole}
           competencies={competencies}
           courses={courses}
-          onEnrollPath={(courseIds) => {
-            const first = courses.find((c) => c.id === courseIds[0]);
-            if (first) setActiveCourseToPlay(first);
+          onStartCourse={(cId) => {
+            const course = courses.find((c) => c.id === cId);
+            if (course) setActiveCourseToPlay(course);
           }}
         />
       </section>
 
-      {/* PILLAR 1: Enrolled Courses & Assessment Player */}
+      {/* REAL 30-DAY LEARNING PATHS FROM TOP MNCS */}
+      <section id="paths" className="space-y-4 pt-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-mono uppercase text-indigo-400 font-bold">
+              Global MNC Industry Curricula
+            </span>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <Milestone className="h-5 w-5 text-indigo-400" />
+              Real 30-Day Certification Learning Paths
+            </h2>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {learningPaths.map((path) => (
+            <div
+              key={path.id}
+              className="p-6 rounded-3xl border border-white/10 bg-[#090b14]/90 space-y-4 shadow-xl flex flex-col justify-between"
+            >
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                    {path.provider}
+                  </span>
+                  <span className="text-xs font-mono text-neutral-400">{path.durationDays} Days · {path.estimatedHours} Hours</span>
+                </div>
+
+                <h3 className="text-base font-bold text-white">{path.title}</h3>
+                <p className="text-xs text-neutral-400 leading-relaxed">{path.description}</p>
+
+                {/* 4-Week Milestone Timeline */}
+                <div className="space-y-2 pt-2 border-t border-white/5">
+                  <span className="text-[10px] font-mono uppercase text-neutral-400 font-bold block">
+                    Syllabus Milestones:
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    {path.milestones.map((m, idx) => (
+                      <div key={idx} className="p-2.5 rounded-xl bg-black/40 border border-white/5 space-y-1">
+                        <div className="flex items-center justify-between text-[10px] font-mono">
+                          <span className="text-indigo-400 font-bold">{m.dayRange}</span>
+                          <span className="text-neutral-500">{m.skillsUnlocked[0]}</span>
+                        </div>
+                        <span className="font-semibold text-white block text-[11px] truncate">{m.title}</span>
+                        <p className="text-[10px] text-neutral-400 truncate">{m.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                <span className="text-xs font-mono text-emerald-400 flex items-center gap-1">
+                  <Award className="h-3.5 w-3.5" /> Reward: {path.badgeReward}
+                </span>
+
+                <button
+                  onClick={() => {
+                    const firstCourse = courses.find((c) => path.courseIds.includes(c.id)) || courses[0];
+                    setActiveCourseToPlay(firstCourse);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-600/30 transition-all flex items-center gap-1.5"
+                >
+                  <PlayCircle className="h-3.5 w-3.5" /> Start 30-Day Track
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Enrolled Courses & Lab Workbenches */}
       <section id="courses" className="space-y-4 pt-4">
         <div className="flex items-center justify-between">
           <div>
@@ -205,17 +287,21 @@ export default function LearnerPortal() {
             </span>
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
               <BookOpen className="h-5 w-5 text-indigo-400" />
-              My Enrolled Courses & Lab Workbenches
+              MNC Courses & Hands-On Lab Workbenches
             </h2>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {userEnrollments.map((enr) => {
-            const course = enr.course!;
+          {courses.map((course) => {
+            const userEnr = enrollments.find((e) => e.courseId === course.id && e.userId === learner.id);
+            const isEnrolled = !!userEnr;
+            const isCompleted = userEnr?.status === "completed";
+            const progress = userEnr ? userEnr.progressPercent : 0;
+
             return (
               <div
-                key={enr.id}
+                key={course.id}
                 className="rounded-3xl border border-white/10 bg-[#090b14]/90 overflow-hidden flex flex-col justify-between hover:border-indigo-500/40 transition-all shadow-xl group"
               >
                 <div className="relative h-40 overflow-hidden bg-neutral-900">
@@ -226,8 +312,8 @@ export default function LearnerPortal() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#090b14] via-[#090b14]/40 to-transparent" />
                   <div className="absolute top-3 right-3">
-                    <Badge variant={enr.status === "completed" ? "success" : "cyan"} size="sm">
-                      {enr.status === "completed" ? "Completed 100%" : `${enr.progressPercent}% In Progress`}
+                    <Badge variant={isCompleted ? "success" : isEnrolled ? "cyan" : "neutral"} size="sm">
+                      {isCompleted ? "Completed 100%" : isEnrolled ? `${progress}% In Progress` : "Available"}
                     </Badge>
                   </div>
                   <div className="absolute bottom-3 left-4">
@@ -258,23 +344,28 @@ export default function LearnerPortal() {
                   <div className="space-y-2 pt-2 border-t border-white/5">
                     <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400">
                       <span>Progress</span>
-                      <span className="text-white font-bold">{enr.progressPercent}%</span>
+                      <span className="text-white font-bold">{progress}%</span>
                     </div>
                     <div className="w-full bg-black/40 rounded-full h-1.5 overflow-hidden">
                       <div
                         className="bg-gradient-to-r from-indigo-500 to-emerald-400 h-full rounded-full transition-all"
-                        style={{ width: `${enr.progressPercent}%` }}
+                        style={{ width: `${progress}%` }}
                       />
                     </div>
                   </div>
 
                   <div className="pt-2">
                     <button
-                      onClick={() => setActiveCourseToPlay(course)}
-                      className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-600/25 transition-all flex items-center justify-center gap-1.5"
+                      onClick={() => {
+                        if (!isEnrolled) {
+                          enrollInCourse(course.id);
+                        }
+                        setActiveCourseToPlay(course);
+                      }}
+                      className="w-full py-2.5 rounded-xl bg-white/5 hover:bg-indigo-600 text-neutral-200 hover:text-white text-xs font-semibold border border-white/10 hover:border-indigo-500/50 transition-all flex items-center justify-center gap-2 shadow-lg"
                     >
                       <PlayCircle className="h-4 w-4" />
-                      {enr.status === "completed" ? "Review Course & Quiz" : "Continue Lesson & Take Quiz"}
+                      <span>{isCompleted ? "Review & Retake Workbench" : isEnrolled ? "Resume Workbench" : "Enroll & Start (0%)"}</span>
                     </button>
                   </div>
                 </div>
@@ -284,18 +375,8 @@ export default function LearnerPortal() {
         </div>
       </section>
 
-      {/* PILLAR 3: Knowledge Sharing Hub */}
-      <section id="knowledge" className="pt-6">
-        <div className="mb-4">
-          <span className="text-[10px] font-mono uppercase text-cyan-400 font-bold">
-            Peer-to-Peer Knowledge Sharing
-          </span>
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
-            <Share2 className="h-5 w-5 text-cyan-400" />
-            Engineering Wiki & Ask an Expert Q&A
-          </h2>
-        </div>
-
+      {/* PILLAR 3: Peer Knowledge Hub & Expert Help */}
+      <section id="knowledge">
         <KnowledgeHub
           articles={articles}
           questions={questions}
@@ -379,37 +460,47 @@ export default function LearnerPortal() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {certificates.map((cert) => (
-            <div
-              key={cert.id}
-              className="p-5 rounded-3xl border border-amber-500/20 bg-gradient-to-r from-amber-950/20 via-[#090b14] to-[#090b14] flex items-center justify-between gap-4 shadow-xl"
-            >
-              <div className="space-y-1">
-                <span className="text-[10px] font-mono text-amber-400 uppercase font-bold">
-                  {cert.issuerOrg}
-                </span>
-                <h3 className="text-sm font-bold text-white">{cert.pathTitle}</h3>
-                <div className="flex items-center gap-2 text-xs text-neutral-400 font-mono">
-                  <span>Issued: {cert.issuedAt}</span>
-                  <span>•</span>
-                  <span>Score: {cert.score}%</span>
-                </div>
-                <span className="text-[10px] font-mono text-indigo-400 block pt-1">
-                  Code: {cert.verificationCode}
-                </span>
-              </div>
-
-              <Link
-                href={`/verify/${cert.verificationCode}`}
-                className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-semibold border border-white/10 flex items-center gap-1.5 shrink-0 transition-colors"
+        {certificates.length === 0 ? (
+          <div className="p-8 rounded-3xl border border-dashed border-white/10 bg-[#090b14]/50 text-center space-y-3">
+            <Award className="h-10 w-10 text-amber-400/50 mx-auto" />
+            <h3 className="text-sm font-bold text-white">No Verifiable Certificates Issued Yet</h3>
+            <p className="text-xs text-neutral-400 max-w-md mx-auto">
+              Complete a course workbench above and pass the certification exam with 70%+ honors to generate your first tamper-proof credential on the ledger!
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {certificates.map((cert) => (
+              <div
+                key={cert.id}
+                className="p-5 rounded-3xl border border-amber-500/20 bg-gradient-to-r from-amber-950/20 via-[#090b14] to-[#090b14] flex items-center justify-between gap-4 shadow-xl"
               >
-                <span>Verify Publicly</span>
-                <ExternalLink className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-          ))}
-        </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-mono text-amber-400 uppercase font-bold">
+                    {cert.issuerOrg}
+                  </span>
+                  <h3 className="text-sm font-bold text-white">{cert.pathTitle}</h3>
+                  <div className="flex items-center gap-2 text-xs text-neutral-400 font-mono">
+                    <span>Issued: {cert.issuedAt}</span>
+                    <span>•</span>
+                    <span>Score: {cert.score}%</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-indigo-400 block pt-1">
+                    Code: {cert.verificationCode}
+                  </span>
+                </div>
+
+                <Link
+                  href={`/verify/${cert.verificationCode}`}
+                  className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-semibold border border-white/10 flex items-center gap-1.5 shrink-0 transition-colors"
+                >
+                  <span>Verify Publicly</span>
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Course Player Modal Overlay */}
