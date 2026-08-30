@@ -26,6 +26,7 @@ import {
   UserPlus,
   Briefcase,
   Building,
+  Key,
 } from "lucide-react";
 
 function SignupContent() {
@@ -36,9 +37,7 @@ function SignupContent() {
   const { registerUser, setDemoToast, competencies } = useAppState();
 
   const [selectedRole, setSelectedRole] = useState<RoleType>(
-    initialRoleParam === "manager" ||
-      initialRoleParam === "trainer" ||
-      initialRoleParam === "admin"
+    initialRoleParam === "manager" || initialRoleParam === "trainer"
       ? initialRoleParam
       : "learner"
   );
@@ -51,6 +50,7 @@ function SignupContent() {
   const [department, setDepartment] = useState("Engineering");
   const [jobTitle, setJobTitle] = useState("Junior Software Engineer");
   const [baselineSkillLevel, setBaselineSkillLevel] = useState<number>(1);
+  const [adminSecurityToken, setAdminSecurityToken] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,45 +70,6 @@ function SignupContent() {
     } else if (role === "admin") {
       setJobTitle("Enterprise Learning Administrator");
       setDepartment("Executive & People Operations");
-    }
-  };
-
-  const handlePreFill = (role: RoleType) => {
-    setSelectedRole(role);
-    setValidationError(null);
-    if (role === "learner") {
-      setFullName("Maya Patel");
-      setEmail("maya.patel@google.com");
-      setContactNumber("+1 (555) 492-8102");
-      setDepartment("Engineering");
-      setJobTitle("Cloud Software Engineer");
-      setPassword("Passcode@2026");
-      setConfirmPassword("Passcode@2026");
-      setBaselineSkillLevel(1);
-    } else if (role === "manager") {
-      setFullName("David Miller");
-      setEmail("david.miller@dell.com");
-      setContactNumber("+1 (555) 782-9012");
-      setDepartment("Product & Design");
-      setJobTitle("Director of Systems Engineering");
-      setPassword("Passcode@2026");
-      setConfirmPassword("Passcode@2026");
-    } else if (role === "trainer") {
-      setFullName("Clara Hughes");
-      setEmail("clara.hughes@microsoft.com");
-      setContactNumber("+1 (555) 321-7890");
-      setDepartment("Curriculum & Talent Development");
-      setJobTitle("Lead Azure L&D Architect");
-      setPassword("Passcode@2026");
-      setConfirmPassword("Passcode@2026");
-    } else {
-      setFullName("Arthur Vance");
-      setEmail("arthur.vance@enterprise.io");
-      setContactNumber("+1 (555) 901-8374");
-      setDepartment("Executive & People Operations");
-      setJobTitle("Chief People Officer");
-      setPassword("Passcode@2026");
-      setConfirmPassword("Passcode@2026");
     }
   };
 
@@ -140,6 +101,16 @@ function SignupContent() {
     if (password !== confirmPassword) {
       setValidationError("Passwords do not match. Please re-enter.");
       return;
+    }
+
+    // ETHICAL SECURITY GUARD: Super Admin creation requires confidential Master Token
+    if (selectedRole === "admin") {
+      if (adminSecurityToken.trim() !== "CC-SUPERADMIN-2026-KEY") {
+        setValidationError(
+          "Access Denied: Super Admin accounts cannot be created publicly. A valid Enterprise Master Token (e.g. CC-SUPERADMIN-2026-KEY) issued by IT Security is required."
+        );
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -226,7 +197,7 @@ function SignupContent() {
     },
     admin: {
       title: "Super Admin Governance Account",
-      desc: "Define master competency scales, configure organizational job roles, and monitor enterprise training ROI.",
+      desc: "Requires verified Enterprise Master Security Token to provision Super Admin clearance.",
       badge: "Super Admin RBAC",
       badgeColor: "purple" as const,
       color: "from-violet-500/20 to-indigo-500/10 border-violet-500/30",
@@ -269,7 +240,7 @@ function SignupContent() {
       {/* Main Registration Layout */}
       <main className="flex-1 flex items-center justify-center p-6 py-12">
         <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          {/* Left Column: Role Details & Fast Pre-fills (5 Cols) */}
+          {/* Left Column: Role Details & Clear Information (5 Cols) */}
           <div className="lg:col-span-5 space-y-6">
             <div className="space-y-2">
               <Badge variant={roleMeta.badgeColor} size="sm" dot>
@@ -296,45 +267,11 @@ function SignupContent() {
               ))}
             </div>
 
-            {/* 1-Click Fast Pre-Fill */}
-            <div className="pt-4 border-t border-white/10 space-y-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 block">
-                1-Click Sample Pre-Fill:
-              </span>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <button
-                  type="button"
-                  onClick={() => handlePreFill("learner")}
-                  className="p-2 rounded-xl bg-white/[0.02] hover:bg-emerald-500/20 text-neutral-300 hover:text-emerald-300 border border-white/5 text-left text-[11px] font-semibold transition-all"
-                >
-                  <span className="text-[9px] text-neutral-500 block">Google Learner</span>
-                  Maya P.
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePreFill("manager")}
-                  className="p-2 rounded-xl bg-white/[0.02] hover:bg-cyan-500/20 text-neutral-300 hover:text-cyan-300 border border-white/5 text-left text-[11px] font-semibold transition-all"
-                >
-                  <span className="text-[9px] text-neutral-500 block">Dell Manager</span>
-                  David M.
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePreFill("trainer")}
-                  className="p-2 rounded-xl bg-white/[0.02] hover:bg-indigo-500/20 text-neutral-300 hover:text-indigo-300 border border-white/5 text-left text-[11px] font-semibold transition-all"
-                >
-                  <span className="text-[9px] text-neutral-500 block">MSFT Trainer</span>
-                  Clara H.
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePreFill("admin")}
-                  className="p-2 rounded-xl bg-white/[0.02] hover:bg-violet-500/20 text-neutral-300 hover:text-violet-300 border border-white/5 text-left text-[11px] font-semibold transition-all"
-                >
-                  <span className="text-[9px] text-neutral-500 block">Admin</span>
-                  Arthur V.
-                </button>
-              </div>
+            <div className="p-4 rounded-2xl bg-black/40 border border-white/10 text-xs text-neutral-400 space-y-1">
+              <span className="font-bold text-white block">Enterprise Role Enforcement:</span>
+              <p className="text-[11px] leading-relaxed">
+                Your permissions and workspace capabilities are strictly established by your registered role clearance. Workspaces cannot be switched without logging out and authenticating as another verified account.
+              </p>
             </div>
           </div>
 
@@ -428,7 +365,7 @@ function SignupContent() {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="font-medium text-neutral-300">Contact / Phone Number *</label>
+                    <label className="font-medium text-neutral-300">Contact Phone Number *</label>
                     <div className="relative">
                       <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-500" />
                       <input
@@ -444,13 +381,13 @@ function SignupContent() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="font-medium text-neutral-300">Enterprise Email Address *</label>
+                  <label className="font-medium text-neutral-300">Enterprise Corporate Email *</label>
                   <div className="relative">
                     <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-500" />
                     <input
                       type="email"
                       required
-                      placeholder="name@company.com (e.g. google.com, dell.com)"
+                      placeholder="name@company.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="w-full bg-white/[0.04] border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-neutral-500 focus:outline-none focus:border-indigo-500 font-mono"
@@ -478,7 +415,7 @@ function SignupContent() {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="font-medium text-neutral-300">Job Title / Role</label>
+                    <label className="font-medium text-neutral-300">Job Title / Designation</label>
                     <div className="relative">
                       <Briefcase className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-500" />
                       <input
@@ -491,6 +428,27 @@ function SignupContent() {
                     </div>
                   </div>
                 </div>
+
+                {/* If Super Admin is selected: Require IT Security Master Token */}
+                {selectedRole === "admin" && (
+                  <div className="space-y-1.5 p-3.5 rounded-2xl bg-violet-950/30 border border-violet-500/30">
+                    <label className="font-bold text-violet-300 flex items-center gap-1.5">
+                      <Key className="h-3.5 w-3.5 text-violet-400" />
+                      Enterprise Master Security Token * (Required for Admin Provisioning)
+                    </label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="Enter IT Security Master Token (e.g. CC-SUPERADMIN-2026-KEY)"
+                      value={adminSecurityToken}
+                      onChange={(e) => setAdminSecurityToken(e.target.value)}
+                      className="w-full bg-black/50 border border-violet-500/40 rounded-xl px-3 py-2 text-white placeholder-neutral-500 focus:outline-none font-mono"
+                    />
+                    <span className="text-[10px] text-neutral-400 block">
+                      Protected authorization control. Only authorized IT personnel with master key can initialize Super Admin status.
+                    </span>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
@@ -545,7 +503,7 @@ function SignupContent() {
                 >
                   <UserPlus className="h-4 w-4" />
                   {isSubmitting
-                    ? "Provisioning Account & Generating Clean Progression..."
+                    ? "Provisioning Account & Establishing Role Clearance..."
                     : `Create & Initialize ${roleMeta.title}`}
                   <ArrowRight className="h-4 w-4" />
                 </button>
@@ -557,7 +515,7 @@ function SignupContent() {
 
       {/* Footer */}
       <footer className="py-6 px-6 text-center text-xs text-neutral-500 border-t border-white/5">
-        <p>CAPACITY CONNECT · Digital Capacity Building & Learning Management Portal · Real-Time Registration Engine</p>
+        <p>CAPACITY CONNECT · Digital Capacity Building & Learning Management Portal · Enterprise Registration</p>
       </footer>
     </div>
   );

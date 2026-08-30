@@ -18,16 +18,29 @@ import {
   Zap,
   Clock,
   ArrowRight,
+  AlertTriangle,
 } from "lucide-react";
 
 export default function TrainerPortal() {
-  const { courses, competencies, learningPaths, enrollments, addNewCourse } = useAppState();
+  const { role, courses, competencies, learningPaths, enrollments, addNewCourse } = useAppState();
 
   const [showAIQuizModal, setShowAIQuizModal] = useState(false);
   const [showNewCourseModal, setShowNewCourseModal] = useState(false);
 
   // New Course State
   const [courseTitle, setCourseTitle] = useState("");
+
+  if (role !== "trainer") {
+    return (
+      <div className="p-8 rounded-3xl border border-rose-500/30 bg-rose-950/20 text-center space-y-4 my-12">
+        <AlertTriangle className="h-10 w-10 text-rose-400 mx-auto" />
+        <h2 className="text-lg font-bold text-white">403 Forbidden: L&D Trainer Clearance Required</h2>
+        <p className="text-xs text-neutral-400 max-w-md mx-auto">
+          You are currently authenticated with <strong>{role.toUpperCase()}</strong> clearance. Curriculum authoring and AI quiz synthesis tools are restricted to certified L&D Trainers and Curriculum Architects.
+        </p>
+      </div>
+    );
+  }
   const [courseDesc, setCourseDesc] = useState("");
   const [courseDuration, setCourseDuration] = useState("3.0 Hours");
   const [courseCompId, setCourseCompId] = useState(competencies[0]?.id || "comp-k8s");

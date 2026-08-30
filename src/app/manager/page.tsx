@@ -23,6 +23,7 @@ import {
 
 export default function ManagerPortal() {
   const {
+    role,
     teamMembers,
     currentProfile,
     competencies,
@@ -53,6 +54,18 @@ export default function ManagerPortal() {
       return { ...e, member, course };
     })
     .filter((e) => e.member !== undefined && e.course !== undefined);
+
+  if (role !== "manager") {
+    return (
+      <div className="p-8 rounded-3xl border border-rose-500/30 bg-rose-950/20 text-center space-y-4 my-12">
+        <AlertTriangle className="h-10 w-10 text-rose-400 mx-auto" />
+        <h2 className="text-lg font-bold text-white">403 Forbidden: People Leadership Clearance Required</h2>
+        <p className="text-xs text-neutral-400 max-w-md mx-auto">
+          You are currently authenticated with <strong>{role.toUpperCase()}</strong> clearance. Access to Team Competency Heatmaps and Manager Intervention Nudges is restricted to People Leads.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 pb-16">

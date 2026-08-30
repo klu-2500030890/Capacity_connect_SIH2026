@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAppState, RoleType, DEMO_USERS } from "@/context/AppStateContext";
+import { useAppState } from "@/context/AppStateContext";
 import {
   Search,
   Bell,
@@ -15,11 +15,8 @@ import {
   SlidersHorizontal,
   LogOut,
   User,
-  GraduationCap,
-  Building2,
   ChevronDown,
   ShieldCheck,
-  Grid,
   Zap,
 } from "lucide-react";
 import { NotificationCenter } from "./NotificationCenter";
@@ -29,7 +26,6 @@ export const AppHeader: React.FC = () => {
   const router = useRouter();
   const {
     role,
-    setRole,
     currentUser,
     logout,
     theme,
@@ -60,12 +56,6 @@ export const AppHeader: React.FC = () => {
     router.push("/login");
   };
 
-  const handleSwitchRole = (newRole: RoleType) => {
-    setRole(newRole);
-    setShowUserMenu(false);
-    router.push(`/${newRole}`);
-  };
-
   // Breadcrumbs title from pathname
   const getPageTitle = () => {
     if (pathname.includes("verify")) return "Public Certificate Cryptographic Verification";
@@ -77,7 +67,7 @@ export const AppHeader: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-white/10 dark:border-white/5 bg-[#080a10]/80 backdrop-blur-xl px-6">
+    <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-white/10 bg-[#080a10]/80 backdrop-blur-xl px-6">
       {/* Title & Path Status */}
       <div className="flex items-center gap-3">
         <div className="flex flex-col">
@@ -135,7 +125,7 @@ export const AppHeader: React.FC = () => {
           )}
         </div>
 
-        {/* User Profile & Logout Session Dropdown */}
+        {/* User Profile & Secure Logout (NO WORKSPACE SWITCHING) */}
         <div className="relative" ref={userMenuRef}>
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
@@ -143,7 +133,7 @@ export const AppHeader: React.FC = () => {
           >
             <div className="flex flex-col text-right hidden sm:block">
               <span className="text-xs font-bold text-white leading-none">{currentUser.name}</span>
-              <span className="text-[10px] text-neutral-400 leading-tight">{currentUser.clearanceTag}</span>
+              <span className="text-[10px] text-neutral-400 leading-tight font-mono">{currentUser.clearanceTag}</span>
             </div>
             <div className="w-8 h-8 rounded-xl overflow-hidden border border-white/15 bg-neutral-800 shrink-0">
               <img src={currentUser.avatar} alt="Avatar" className="w-full h-full object-cover" />
@@ -153,78 +143,22 @@ export const AppHeader: React.FC = () => {
 
           {showUserMenu && (
             <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-white/10 bg-[#0e111a]/95 backdrop-blur-2xl shadow-2xl p-2 z-50 animate-in fade-in duration-150 space-y-1">
-              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5 mb-1">
+              <div className="p-3 rounded-xl bg-white/[0.03] border border-white/5 space-y-1">
                 <span className="text-xs font-bold text-white block">{currentUser.name}</span>
-                <span className="text-[11px] text-neutral-400 block">{currentUser.email}</span>
-                <span className="text-[10px] font-mono text-indigo-400 mt-1 inline-block">
-                  {currentUser.title}
-                </span>
+                <span className="text-[11px] text-neutral-400 block font-mono">{currentUser.email}</span>
+                {currentUser.contactNumber && (
+                  <span className="text-[10px] text-emerald-400 block font-mono">{currentUser.contactNumber}</span>
+                )}
+                <div className="pt-1.5 flex items-center justify-between border-t border-white/5 mt-1 text-[10px] font-mono">
+                  <span className="text-neutral-500">Department:</span>
+                  <span className="text-neutral-300 font-semibold">{currentUser.department}</span>
+                </div>
               </div>
 
-              <div className="text-[10px] uppercase font-bold text-neutral-500 px-2 py-1">
-                Switch Role Clearance
-              </div>
-
-              <button
-                onClick={() => handleSwitchRole("learner")}
-                className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-medium transition-all ${
-                  role === "learner"
-                    ? "bg-emerald-500/15 text-emerald-300 font-bold"
-                    : "text-neutral-400 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <span className="flex items-center gap-2">
-                  <User className="h-3.5 w-3.5" /> Learner Portal
-                </span>
-                {role === "learner" && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
-              </button>
-
-              <button
-                onClick={() => handleSwitchRole("manager")}
-                className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-medium transition-all ${
-                  role === "manager"
-                    ? "bg-cyan-500/15 text-cyan-300 font-bold"
-                    : "text-neutral-400 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <span className="flex items-center gap-2">
-                  <Grid className="h-3.5 w-3.5" /> Manager Portal
-                </span>
-                {role === "manager" && <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />}
-              </button>
-
-              <button
-                onClick={() => handleSwitchRole("trainer")}
-                className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-medium transition-all ${
-                  role === "trainer"
-                    ? "bg-indigo-500/15 text-indigo-300 font-bold"
-                    : "text-neutral-400 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <span className="flex items-center gap-2">
-                  <GraduationCap className="h-3.5 w-3.5" /> Trainer Studio
-                </span>
-                {role === "trainer" && <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />}
-              </button>
-
-              <button
-                onClick={() => handleSwitchRole("admin")}
-                className={`w-full flex items-center justify-between p-2 rounded-xl text-xs font-medium transition-all ${
-                  role === "admin"
-                    ? "bg-violet-500/15 text-violet-300 font-bold"
-                    : "text-neutral-400 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <span className="flex items-center gap-2">
-                  <Building2 className="h-3.5 w-3.5" /> Super Admin
-                </span>
-                {role === "admin" && <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />}
-              </button>
-
-              <div className="pt-2 border-t border-white/5 mt-1">
+              <div className="p-2">
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-2 p-2 rounded-xl text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl text-xs font-bold text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 transition-colors"
                 >
                   <LogOut className="h-3.5 w-3.5" /> Log Out Session
                 </button>

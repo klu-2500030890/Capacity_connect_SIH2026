@@ -31,6 +31,7 @@ import {
 
 export default function LearnerPortal() {
   const {
+    role,
     learner,
     competencies,
     jobRoles,
@@ -42,6 +43,8 @@ export default function LearnerPortal() {
     certificates,
     badges,
     sessions,
+    notifications,
+    dismissNudge,
     passQuizAndLevelUp,
     submitAssignment,
     enrollInCourse,
@@ -56,6 +59,11 @@ export default function LearnerPortal() {
   // Match target role
   const targetRole = jobRoles.find((r) => r.id === "role-sr-cloud-arch") || jobRoles[2];
 
+  // Pending Manager Nudges addressed to this learner
+  const pendingNudges = notifications.filter(
+    (n) => (n.targetUserId === learner.id || n.targetUserId === "usr-alex-learner") && n.isNudge
+  );
+
   // Calculate enrolled courses data
   const userEnrollments = enrollments
     .filter((e) => e.userId === learner.id)
@@ -65,8 +73,64 @@ export default function LearnerPortal() {
     })
     .filter((e) => e.course !== undefined);
 
+  if (role !== "learner") {
+    return (
+      <div className="p-8 rounded-3xl border border-rose-500/30 bg-rose-950/20 text-center space-y-4 my-12">
+        <AlertTriangle className="h-10 w-10 text-rose-400 mx-auto" />
+        <h2 className="text-lg font-bold text-white">403 Forbidden: Insufficient Role Clearance</h2>
+        <p className="text-xs text-neutral-400 max-w-md mx-auto">
+          You are currently authenticated with <strong>{role.toUpperCase()}</strong> clearance. Please log out and sign in with a verified Employee Learner account to access the Learner Academy.
+        </p>
+        <Link
+          href={`/${role}`}
+          className="inline-block px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold"
+        >
+          Return to Authorized {role.toUpperCase()} Workspace
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 pb-16">
+      {/* 🚨 TWO-WAY INTERVENTION: Active Manager Nudge Alert Banner */}
+      {pendingNudges.length > 0 && (
+        <div className="space-y-3">
+          {pendingNudges.map((nudge) => {
+            const course = courses.find((c) => c.id === nudge.courseId) || courses[0];
+            return (
+              <div
+                key={nudge.id}
+                className="p-4 sm:p-5 rounded-3xl border border-amber-500/40 bg-gradient-to-r from-amber-950/40 via-[#0d0f1a] to-amber-950/40 backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xl animate-in fade-in duration-300"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="p-2.5 rounded-2xl bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
+                    <Zap className="h-5 w-5 fill-amber-400 text-amber-400 animate-bounce" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="text-[10px] font-mono uppercase text-amber-400 font-bold block">
+                      {nudge.title}
+                    </span>
+                    <p className="text-xs text-white font-medium">{nudge.message}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+                  <button
+                    onClick={() => {
+                      dismissNudge(nudge.id);
+                      setActiveCourseToPlay(course);
+                    }}
+                    className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold shadow-lg shadow-amber-500/20 transition-all flex items-center gap-1.5"
+                  >
+                    <PlayCircle className="h-3.5 w-3.5" /> Acknowledge & Open Workbench
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
       {/* Top Welcome & Gamification Banner */}
       <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-r from-[#0b0e18] via-[#0d1222] to-[#0b0e18] p-6 md:p-8 backdrop-blur-2xl shadow-2xl">
         <div className="flex flex-wrap items-center justify-between gap-6">

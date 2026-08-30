@@ -89,6 +89,18 @@ export const DEMO_USERS: Record<RoleType, DemoUserCredentials> = {
   },
 };
 
+export interface AppNotification {
+  id: string;
+  targetUserId?: string;
+  title: string;
+  message: string;
+  time: string;
+  type: "info" | "success" | "warning";
+  read: boolean;
+  isNudge?: boolean;
+  courseId?: string;
+}
+
 interface AppStateContextType {
   role: RoleType;
   setRole: (role: RoleType) => void;
@@ -115,12 +127,13 @@ interface AppStateContextType {
   certificates: CertificateItem[];
   badges: BadgeItem[];
   sessions: CalendarSession[];
-  notifications: any[];
+  notifications: AppNotification[];
 
   // Shell State
   isCommandPaletteOpen: boolean;
   setIsCommandPaletteOpen: (open: boolean) => void;
   markNotificationAsRead: (id: string) => void;
+  dismissNudge: (notificationId: string) => void;
   demoToast: { message: string; type: "info" | "success" | "warning" } | null;
   setDemoToast: (toast: { message: string; type: "info" | "success" | "warning" } | null) => void;
 
@@ -163,11 +176,11 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [badges, setBadges] = useState<BadgeItem[]>(SEEDED_BADGES);
   const [sessions, setSessions] = useState<CalendarSession[]>(SEEDED_SESSIONS);
 
-  const [notifications, setNotifications] = useState<any[]>([
+  const [notifications, setNotifications] = useState<AppNotification[]>([
     {
       id: "notif-1",
-      title: "Capacity Connect RBAC Engine Initialized",
-      message: "Connected to enterprise LDAP & SSO directory with TLS 1.3 protocol.",
+      title: "Capacity Connect Enterprise Engine Active",
+      message: "SSO and TLS 1.3 cryptographic session active.",
       time: "Just now",
       type: "info",
       read: false,
@@ -207,6 +220,10 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     );
   };
 
+  const dismissNudge = (notificationId: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+  };
+
   // -------------------------------------------------------------
   // AUTHENTICATION & REGISTRATION
   // -------------------------------------------------------------
@@ -236,7 +253,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     if (matchedUser) {
       if (passwordAttempt && matchedUser.password && passwordAttempt !== matchedUser.password && passwordAttempt !== "Passcode@2026") {
-        return { success: false, error: "Invalid password for this account." };
+        return { success: false, error: "Invalid password for this enterprise account." };
       }
 
       setRoleState(matchedUser.role);
@@ -271,6 +288,11 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
       setRoleState(demoEntry.role);
       setCurrentUser(demoEntry);
+      const matchedProfile = registeredUsers.find((u) => u.role === demoEntry.role) || SEEDED_LEARNER_PROFILE;
+      setCurrentProfile(matchedProfile);
+      if (demoEntry.role === "learner") {
+        setLearner(matchedProfile);
+      }
       setIsAuthenticated(true);
       return { success: true };
     }
@@ -436,15 +458,20 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setBadges((prev) => [newBadge, ...prev]);
     }
 
-    // 5. Dispatch celebratory notification
-    setDemoToast({
-      message: `🎉 Assessment Passed (${score}%)! Competencies updated to Level ${targetCourse.competencyGainLevel} on your Skill Radar. +250 XP earned.`,
-      type: "success",
-    });
-
+    // 5. TWO-WAY NOTIFICATION: Notify the Manager that learner completed the course
     setNotifications((prev) => [
       {
-        id: `notif-${Date.now()}`,
+        id: `notif-comp-${Date.now()}`,
+        targetUserId: "usr-sarah-manager",
+        title: `🎉 Course Passed: ${learner.name}`,
+        message: `${learner.name} completed '${targetCourse.title}' with ${score}% honors score. Competency upgraded on team heatmap.`,
+        time: "Just now",
+        type: "success",
+        read: false,
+      },
+      {
+        id: `notif-cert-${Date.now()}`,
+        targetUserId: learner.id,
         title: `Certification Issued: ${targetCourse.title}`,
         message: `Verified on ledger. Verification Code: ${newCertCode}`,
         time: "Just now",
@@ -453,6 +480,11 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       },
       ...prev,
     ]);
+
+    setDemoToast({
+      message: `🎉 Assessment Passed (${score}%)! Competencies updated to Level ${targetCourse.competencyGainLevel} on your Skill Radar. +250 XP earned.`,
+      type: "success",
+    });
   };
 
   const submitAssignment = (courseId: string, assignmentId: string, code: string, passed: boolean) => {
@@ -478,22 +510,27 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  // TWO-WAY INTERACTION: Manager sends 1-Click Nudge to Learner
   const nudgeTeamMember = (memberId: string, memberName: string, courseTitle: string) => {
-    setNotifications((prev) => [
-      {
-        id: `notif-${Date.now()}`,
-        title: `Manager Nudge Dispatched: ${memberName}`,
-        message: `Encouragement sent to ${memberName} for '${courseTitle}'.`,
-        time: "Just now",
-        type: "info",
-        read: false,
-      },
-      ...prev,
-    ]);
+    const course = courses.find((c) => c.title === courseTitle) || courses[0];
+
+    const nudgeNotif: AppNotification = {
+      id: `notif-nudge-${Date.now()}`,
+      targetUserId: memberId,
+      title: `🚨 Manager Intervention: ${courseTitle}`,
+      message: `Your People Manager (Sarah Chen) noticed you are at-risk or lagging in '${courseTitle}'. Please resume your workbench.`,
+      time: "Just now",
+      type: "warning",
+      read: false,
+      isNudge: true,
+      courseId: course.id,
+    };
+
+    setNotifications((prev) => [nudgeNotif, ...prev]);
 
     setDemoToast({
-      message: `Nudge successfully sent to ${memberName}. Notification dispatched.`,
-      type: "info",
+      message: `Direct 1-Click Nudge dispatched to ${memberName}. Real-time notification delivered to their workspace.`,
+      type: "warning",
     });
   };
 
@@ -512,6 +549,19 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         completedModuleIds: [],
         startedAt: "Assigned today",
       },
+    ]);
+
+    setNotifications((prev) => [
+      {
+        id: `notif-nom-${Date.now()}`,
+        targetUserId: memberId,
+        title: `Mandatory Course Assignment: ${course?.title}`,
+        message: `Your People Manager nominated you for '${course?.title}'. Please complete the curriculum.`,
+        time: "Just now",
+        type: "info",
+        read: false,
+      },
+      ...prev,
     ]);
 
     setDemoToast({
@@ -652,6 +702,7 @@ export const AppStateProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         sessions,
         notifications,
         markNotificationAsRead,
+        dismissNudge,
         isCommandPaletteOpen,
         setIsCommandPaletteOpen,
         demoToast,

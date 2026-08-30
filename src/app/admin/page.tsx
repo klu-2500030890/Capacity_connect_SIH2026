@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 
 export default function AdminPortal() {
-  const { competencies, jobRoles, teamMembers, registeredUsers, courses } = useAppState();
+  const { role, competencies, jobRoles, teamMembers, registeredUsers, courses } = useAppState();
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [directorySearch, setDirectorySearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("All");
@@ -45,6 +45,18 @@ export default function AdminPortal() {
       u.jobTitle.toLowerCase().includes(directorySearch.toLowerCase());
     return matchesRole && matchesSearch;
   });
+
+  if (role !== "admin") {
+    return (
+      <div className="p-8 rounded-3xl border border-rose-500/30 bg-rose-950/20 text-center space-y-4 my-12">
+        <AlertTriangle className="h-10 w-10 text-rose-400 mx-auto" />
+        <h2 className="text-lg font-bold text-white">403 Forbidden: Super Admin Governance Clearance Required</h2>
+        <p className="text-xs text-neutral-400 max-w-md mx-auto">
+          You are currently authenticated with <strong>{role.toUpperCase()}</strong> clearance. Access to Global User Directory auditing and Master Competency Framework definitions is strictly restricted to authorized Super Admins.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 pb-16">
