@@ -80,18 +80,46 @@ export default function LearnerPortal() {
 
   if (role !== "learner") {
     return (
-      <div className="p-8 rounded-3xl border border-rose-500/30 bg-rose-950/20 text-center space-y-4 my-12">
-        <AlertTriangle className="h-10 w-10 text-rose-400 mx-auto" />
-        <h2 className="text-lg font-bold text-white">403 Forbidden: Insufficient Role Clearance</h2>
-        <p className="text-xs text-neutral-400 max-w-md mx-auto">
-          You are currently authenticated with <strong>{role.toUpperCase()}</strong> clearance. Please log out and sign in with a verified Employee Learner account to access the Learner Academy.
-        </p>
-        <Link
-          href={`/${role}`}
-          className="inline-block px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold"
-        >
-          Return to Authorized {role.toUpperCase()} Workspace
-        </Link>
+      <div className="max-w-2xl mx-auto my-12 p-8 rounded-3xl border border-emerald-500/30 bg-gradient-to-b from-[#0e101f] to-[#080911] text-center space-y-6 shadow-2xl">
+        <div className="w-14 h-14 rounded-2xl bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-600/20">
+          <GraduationCap className="h-7 w-7 animate-pulse" />
+        </div>
+
+        <div className="space-y-2">
+          <Badge variant="success" size="sm" dot>Employee Learner Gateway</Badge>
+          <h2 className="text-2xl font-extrabold text-white tracking-tight">
+            Learner Clearance Required
+          </h2>
+          <p className="text-xs sm:text-sm text-neutral-400 max-w-md mx-auto leading-relaxed">
+            You are currently accessing this workspace with <strong className="text-white">{role.toUpperCase()}</strong> clearance. To access the personal Skill Radar, AI gap analysis, and 30-day course workbenches, activate Learner status.
+          </p>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-xs text-neutral-300 space-y-2 text-left">
+          <div className="flex items-center justify-between text-neutral-400">
+            <span>Learner Account:</span>
+            <span className="text-emerald-300 font-bold">Alex Rivera</span>
+          </div>
+          <div className="flex items-center justify-between text-neutral-400">
+            <span>Corporate Title:</span>
+            <span className="font-mono text-white">Fullstack Developer (L2)</span>
+          </div>
+          <div className="flex items-center justify-between text-neutral-400">
+            <span>Enterprise Email:</span>
+            <span className="font-mono text-emerald-400">alex.rivera@capacityconnect.io</span>
+          </div>
+        </div>
+
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button
+            onClick={() => login("alex.rivera@capacityconnect.io", "Passcode@2026")}
+            className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-xl shadow-emerald-600/30 transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
+          >
+            <UserCheck className="h-4 w-4" />
+            <span>1-Click Activate Learner Clearance</span>
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
       </div>
     );
   }

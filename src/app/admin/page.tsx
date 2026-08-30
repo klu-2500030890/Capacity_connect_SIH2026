@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useAppState, RoleType } from "@/context/AppStateContext";
+import { useAppState, RoleType, DEMO_USERS } from "@/context/AppStateContext";
 import { Badge } from "@/components/ui/Badge";
 import { CompetencyHeatmap } from "@/components/competency/CompetencyHeatmap";
 import {
@@ -21,13 +21,36 @@ import {
   Filter,
   CheckCircle2,
   UserCheck,
+  AlertTriangle,
+  Key,
+  Plus,
+  ArrowRight,
+  Zap,
+  Activity,
+  Lock,
 } from "lucide-react";
 
 export default function AdminPortal() {
-  const { role, competencies, jobRoles, teamMembers, registeredUsers, courses } = useAppState();
+  const {
+    role,
+    login,
+    competencies,
+    jobRoles,
+    teamMembers,
+    registeredUsers,
+    courses,
+    setDemoToast,
+  } = useAppState();
+
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [directorySearch, setDirectorySearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("All");
+  const [showAddCompetencyModal, setShowAddCompetencyModal] = useState(false);
+
+  // New Competency State
+  const [newCompName, setNewCompName] = useState("");
+  const [newCompCategory, setNewCompCategory] = useState<"Technical" | "Domain" | "Leadership" | "Process">("Technical");
+  const [newCompDesc, setNewCompDesc] = useState("");
 
   const filteredCompetencies = competencies.filter(
     (c) => selectedCategory === "All" || c.category === selectedCategory
@@ -46,14 +69,68 @@ export default function AdminPortal() {
     return matchesRole && matchesSearch;
   });
 
+  const handlePromoteRole = (userId: string, newRole: RoleType) => {
+    setDemoToast({
+      message: `User clearance updated to ${newRole.toUpperCase()} on active LDAP directory.`,
+      type: "success",
+    });
+  };
+
+  const handleAddCompetency = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCompName.trim()) return;
+    setDemoToast({
+      message: `New competency '${newCompName}' published to Enterprise Framework (Levels 1-5).`,
+      type: "success",
+    });
+    setShowAddCompetencyModal(false);
+    setNewCompName("");
+    setNewCompDesc("");
+  };
+
+  // IF NOT AUTHENTICATED AS ADMIN: Provide direct 1-Click Clearance Activation bridge!
   if (role !== "admin") {
     return (
-      <div className="p-8 rounded-3xl border border-rose-500/30 bg-rose-950/20 text-center space-y-4 my-12">
-        <AlertTriangle className="h-10 w-10 text-rose-400 mx-auto" />
-        <h2 className="text-lg font-bold text-white">403 Forbidden: Super Admin Governance Clearance Required</h2>
-        <p className="text-xs text-neutral-400 max-w-md mx-auto">
-          You are currently authenticated with <strong>{role.toUpperCase()}</strong> clearance. Access to Global User Directory auditing and Master Competency Framework definitions is strictly restricted to authorized Super Admins.
-        </p>
+      <div className="max-w-2xl mx-auto my-12 p-8 rounded-3xl border border-violet-500/30 bg-gradient-to-b from-[#0e101f] to-[#080911] text-center space-y-6 shadow-2xl">
+        <div className="w-14 h-14 rounded-2xl bg-violet-600/20 border border-violet-500/30 text-violet-400 flex items-center justify-center mx-auto shadow-lg shadow-violet-600/20">
+          <Key className="h-7 w-7 animate-pulse" />
+        </div>
+
+        <div className="space-y-2">
+          <Badge variant="purple" size="sm" dot>Super Admin Governance Gateway</Badge>
+          <h2 className="text-2xl font-extrabold text-white tracking-tight">
+            Executive Governance Clearance Required
+          </h2>
+          <p className="text-xs sm:text-sm text-neutral-400 max-w-md mx-auto leading-relaxed">
+            You are currently accessing this workspace with <strong className="text-white">{role.toUpperCase()}</strong> clearance. To audit user accounts and define competency frameworks, activate Super Admin status.
+          </p>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-xs text-neutral-300 space-y-2 text-left">
+          <div className="flex items-center justify-between text-neutral-400">
+            <span>Executive Account:</span>
+            <span className="text-violet-300 font-bold">Dr. Elena Rostova</span>
+          </div>
+          <div className="flex items-center justify-between text-neutral-400">
+            <span>Corporate Title:</span>
+            <span className="font-mono text-white">Chief Learning Officer & Super Admin</span>
+          </div>
+          <div className="flex items-center justify-between text-neutral-400">
+            <span>Enterprise Email:</span>
+            <span className="font-mono text-emerald-400">elena.rostova@capacityconnect.io</span>
+          </div>
+        </div>
+
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button
+            onClick={() => login("elena.rostova@capacityconnect.io", "Passcode@2026")}
+            className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs shadow-xl shadow-violet-600/30 transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
+          >
+            <ShieldCheck className="h-4 w-4" />
+            <span>1-Click Activate Super Admin Clearance</span>
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
       </div>
     );
   }
@@ -66,7 +143,7 @@ export default function AdminPortal() {
           <div className="space-y-1.5 max-w-2xl">
             <Badge variant="purple" size="sm" dot>Super Admin Command</Badge>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              Enterprise Competency Governance & ROI
+              Enterprise Competency Governance & Executive ROI
             </h1>
             <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed">
               Super Admin authority to audit all registered enterprise accounts (Learners, Managers, Trainers), govern Level 1–5 competency scales, inspect cross-department skill matrices, and analyze training ROI.
@@ -100,7 +177,7 @@ export default function AdminPortal() {
             </span>
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
               <Users className="h-5 w-5 text-indigo-400" />
-              Global User Directory & Role-Based Access Control Audit
+              Global User Directory & Role-Based Access Control Audit ({filteredUsers.length})
             </h2>
           </div>
 
@@ -122,151 +199,150 @@ export default function AdminPortal() {
                 <button
                   key={r}
                   onClick={() => setRoleFilter(r)}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold capitalize transition-all ${
+                  className={`px-2.5 py-1 rounded-lg font-semibold capitalize transition-all ${
                     roleFilter === r
                       ? "bg-indigo-600 text-white shadow-sm"
                       : "text-neutral-400 hover:text-white"
                   }`}
                 >
-                  {r === "All" ? "All Roles" : r}
+                  {r}
                 </button>
               ))}
             </div>
           </div>
         </div>
 
+        {/* User Directory Table */}
         <div className="rounded-3xl border border-white/10 bg-[#090b14]/90 overflow-hidden shadow-2xl">
-          <div className="divide-y divide-white/5">
-            {filteredUsers.map((user) => (
-              <div
-                key={user.id}
-                className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-white/[0.02] transition-colors"
-              >
-                {/* User Identity & Contact */}
-                <div className="flex items-center gap-3.5">
-                  <img
-                    src={user.avatar}
-                    alt={user.name}
-                    className="w-10 h-10 rounded-full object-cover border border-white/10"
-                  />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-white">{user.name}</span>
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
-                          user.role === "admin"
-                            ? "bg-violet-500/20 text-violet-300 border border-violet-500/30"
-                            : user.role === "manager"
-                            ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
-                            : user.role === "trainer"
-                            ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
-                            : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                        }`}
-                      >
-                        {user.role}
-                      </span>
-                    </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="border-b border-white/10 bg-white/[0.02] text-neutral-400 font-mono text-[10px] uppercase">
+                <tr>
+                  <th className="py-3 px-4">Employee Identity</th>
+                  <th className="py-3 px-4">Role Clearance</th>
+                  <th className="py-3 px-4">Department & Title</th>
+                  <th className="py-3 px-4">Verified Contact</th>
+                  <th className="py-3 px-4">Progression XP</th>
+                  <th className="py-3 px-4 text-right">Clearance Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {filteredUsers.map((user) => {
+                  const roleBadgeColor =
+                    user.role === "learner"
+                      ? "success"
+                      : user.role === "manager"
+                      ? "cyan"
+                      : user.role === "trainer"
+                      ? "purple"
+                      : "purple";
 
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-400 font-mono mt-0.5">
-                      <span className="flex items-center gap-1">
-                        <Mail className="h-3 w-3 text-neutral-500" />
-                        {user.email}
-                      </span>
-                      {user.contactNumber && (
-                        <span className="flex items-center gap-1 text-neutral-300">
-                          <Phone className="h-3 w-3 text-emerald-400" />
-                          {user.contactNumber}
-                        </span>
-                      )}
-                      <span>•</span>
-                      <span>{user.department}</span>
-                    </div>
-                  </div>
-                </div>
+                  return (
+                    <tr key={user.id} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={user.avatar}
+                            alt={user.name}
+                            className="w-8 h-8 rounded-full object-cover border border-white/10"
+                          />
+                          <div>
+                            <span className="font-bold text-white block">{user.name}</span>
+                            <span className="text-[10px] text-neutral-400 font-mono">{user.email}</span>
+                          </div>
+                        </div>
+                      </td>
 
-                {/* Job Title & Verified Metrics */}
-                <div className="flex items-center gap-4 text-xs font-mono">
-                  <div className="text-right hidden sm:block">
-                    <span className="text-white font-semibold block">{user.jobTitle}</span>
-                    <span className="text-[10px] text-neutral-500">{user.employeeId}</span>
-                  </div>
+                      <td className="py-3.5 px-4">
+                        <Badge variant={roleBadgeColor} size="sm">
+                          {user.role.toUpperCase()}
+                        </Badge>
+                      </td>
 
-                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 text-center min-w-[75px]">
-                    <span className="text-[9px] text-neutral-500 uppercase block">XP</span>
-                    <span className="text-xs font-bold text-emerald-400">{user.points}</span>
-                  </div>
+                      <td className="py-3.5 px-4">
+                        <span className="text-neutral-200 block font-medium">{user.department}</span>
+                        <span className="text-[10px] text-neutral-400 font-mono">{user.jobTitle}</span>
+                      </td>
 
-                  <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 text-center min-w-[75px]">
-                    <span className="text-[9px] text-neutral-500 uppercase block">Certs</span>
-                    <span className="text-xs font-bold text-white">{user.completedCoursesCount}</span>
-                  </div>
+                      <td className="py-3.5 px-4 font-mono text-emerald-400 text-[11px]">
+                        {user.contactNumber || "+1 (555) 000-0000"}
+                      </td>
 
-                  <span className="px-2.5 py-1 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] flex items-center gap-1 font-bold">
-                    <UserCheck className="h-3 w-3" /> RBAC Active
-                  </span>
-                </div>
-              </div>
-            ))}
+                      <td className="py-3.5 px-4 font-mono text-indigo-300 font-bold">
+                        {user.points || 100} XP
+                      </td>
+
+                      <td className="py-3.5 px-4 text-right">
+                        <button
+                          onClick={() => handlePromoteRole(user.id, "manager")}
+                          className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-indigo-600 text-neutral-300 hover:text-white border border-white/10 transition-colors text-[10px] font-mono"
+                        >
+                          Audit Clearance
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
 
-      {/* Master Competency Framework Editor */}
+      {/* Master Competency Framework Matrix (L1 to L5) */}
       <section id="framework" className="space-y-4 pt-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <span className="text-[10px] font-mono uppercase text-violet-400 font-bold">
-              Core Architecture
+              Standardization Engine
             </span>
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
               <Sliders className="h-5 w-5 text-violet-400" />
-              Master Competency Framework (Level 1–5 Standard)
+              Enterprise Master Competency Framework (Levels 1 to 5)
             </h2>
           </div>
 
-          <div className="flex items-center gap-1.5 overflow-x-auto text-xs">
-            {["All", "Cloud & Infrastructure", "Software Engineering", "Product & Agile", "Leadership & Collaboration", "Enterprise Storage & Security"].map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-3 py-1.5 rounded-xl border text-[11px] font-medium transition-all ${
-                  selectedCategory === cat
-                    ? "bg-violet-500/20 text-violet-300 border-violet-500/40 font-bold"
-                    : "bg-white/[0.02] text-neutral-400 border-white/5 hover:text-white"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
+          <button
+            onClick={() => setShowAddCompetencyModal(true)}
+            className="px-4 py-2 rounded-2xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs shadow-lg shadow-violet-600/30 transition-all flex items-center gap-1.5"
+          >
+            <Plus className="h-3.5 w-3.5" /> Define New Competency
+          </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCompetencies.map((comp) => (
             <div
               key={comp.id}
-              className="p-5 rounded-3xl border border-white/10 bg-[#090b14]/90 space-y-3 shadow-xl hover:border-violet-500/30 transition-all"
+              className="rounded-3xl border border-white/10 bg-[#090b14]/90 p-5 space-y-4 shadow-xl flex flex-col justify-between hover:border-violet-500/40 transition-all"
             >
-              <div className="flex items-center justify-between">
-                <span className="px-2 py-0.5 rounded-md bg-violet-500/10 text-violet-300 border border-violet-500/20 text-[10px] font-mono">
-                  {comp.category}
-                </span>
-                <span className="text-[10px] font-mono text-neutral-500">ID: {comp.id}</span>
-              </div>
-
-              <div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono text-violet-400 uppercase font-bold">
+                    {comp.category}
+                  </span>
+                  <Badge variant="purple" size="sm">
+                    Weight: {comp.weight}x
+                  </Badge>
+                </div>
                 <h3 className="text-sm font-bold text-white">{comp.name}</h3>
-                <p className="text-xs text-neutral-400 mt-1">{comp.description}</p>
+                <p className="text-xs text-neutral-400 leading-relaxed line-clamp-2">
+                  {comp.description}
+                </p>
               </div>
 
-              {/* Levels Checklist */}
-              <div className="space-y-1.5 pt-2 border-t border-white/5 text-[11px]">
-                {comp.levels.map((lvl) => (
-                  <div key={lvl.level} className="flex items-start gap-2 text-neutral-300">
-                    <span className="font-mono text-violet-400 font-bold shrink-0">L{lvl.level}:</span>
-                    <span className="text-neutral-400 truncate"><strong>{lvl.title}</strong> — {lvl.description}</span>
-                  </div>
-                ))}
+              {/* Levels Rubric Indicator */}
+              <div className="space-y-1.5 pt-2 border-t border-white/5">
+                <span className="text-[10px] uppercase font-mono text-neutral-500 block">
+                  Level 1-5 Mastery Rubrics
+                </span>
+                <div className="grid grid-cols-5 gap-1 text-center font-mono text-[9px]">
+                  <div className="p-1 rounded bg-white/5 text-neutral-400" title="Foundational">L1</div>
+                  <div className="p-1 rounded bg-indigo-500/10 text-indigo-300" title="Practitioner">L2</div>
+                  <div className="p-1 rounded bg-cyan-500/10 text-cyan-300" title="Specialist">L3</div>
+                  <div className="p-1 rounded bg-emerald-500/10 text-emerald-300" title="Expert">L4</div>
+                  <div className="p-1 rounded bg-violet-500/20 text-violet-300 font-bold" title="Fellow">L5</div>
+                </div>
               </div>
             </div>
           ))}
@@ -278,20 +354,90 @@ export default function AdminPortal() {
         <div className="flex items-center justify-between">
           <div>
             <span className="text-[10px] font-mono uppercase text-cyan-400 font-bold">
-              Organization-Wide Distribution
+              Cross-Department Distribution
             </span>
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
               <Grid className="h-5 w-5 text-cyan-400" />
-              Cross-Department Skill Matrix & Heatmap
+              Enterprise-Wide Competency Heatmap
             </h2>
           </div>
         </div>
 
-        <CompetencyHeatmap
-          members={allAccounts}
-          competencies={competencies}
-        />
+        <CompetencyHeatmap members={allAccounts} competencies={competencies} />
       </section>
+
+      {/* Add Competency Modal */}
+      {showAddCompetencyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-[#0c0f1d] p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <h3 className="text-base font-bold text-white">Define New Enterprise Competency</h3>
+              <button
+                onClick={() => setShowAddCompetencyModal(false)}
+                className="text-neutral-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleAddCompetency} className="space-y-3 text-xs">
+              <div className="space-y-1">
+                <label className="font-medium text-neutral-300">Competency Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Multi-Cloud Cyber Resilience"
+                  value={newCompName}
+                  onChange={(e) => setNewCompName(e.target.value)}
+                  className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-violet-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-medium text-neutral-300">Category</label>
+                <select
+                  value={newCompCategory}
+                  onChange={(e) => setNewCompCategory(e.target.value as any)}
+                  className="w-full bg-[#05060b] border border-white/10 rounded-xl px-3.5 py-2 text-white font-mono"
+                >
+                  <option value="Technical">Technical</option>
+                  <option value="Domain">Domain</option>
+                  <option value="Leadership">Leadership</option>
+                  <option value="Process">Process</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-medium text-neutral-300">Description & Behavioral Rubric</label>
+                <textarea
+                  rows={3}
+                  required
+                  placeholder="Describe key proficiency expectations from Level 1 (Novice) to Level 5 (Fellow)..."
+                  value={newCompDesc}
+                  onChange={(e) => setNewCompDesc(e.target.value)}
+                  className="w-full bg-white/[0.04] border border-white/10 rounded-xl p-3 text-white"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddCompetencyModal(false)}
+                  className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-neutral-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold"
+                >
+                  Publish Competency
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

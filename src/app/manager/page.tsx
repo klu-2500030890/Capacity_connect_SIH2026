@@ -57,12 +57,46 @@ export default function ManagerPortal() {
 
   if (role !== "manager") {
     return (
-      <div className="p-8 rounded-3xl border border-rose-500/30 bg-rose-950/20 text-center space-y-4 my-12">
-        <AlertTriangle className="h-10 w-10 text-rose-400 mx-auto" />
-        <h2 className="text-lg font-bold text-white">403 Forbidden: People Leadership Clearance Required</h2>
-        <p className="text-xs text-neutral-400 max-w-md mx-auto">
-          You are currently authenticated with <strong>{role.toUpperCase()}</strong> clearance. Access to Team Competency Heatmaps and Manager Intervention Nudges is restricted to People Leads.
-        </p>
+      <div className="max-w-2xl mx-auto my-12 p-8 rounded-3xl border border-cyan-500/30 bg-gradient-to-b from-[#0e101f] to-[#080911] text-center space-y-6 shadow-2xl">
+        <div className="w-14 h-14 rounded-2xl bg-cyan-600/20 border border-cyan-500/30 text-cyan-400 flex items-center justify-center mx-auto shadow-lg shadow-cyan-600/20">
+          <Grid className="h-7 w-7 animate-pulse" />
+        </div>
+
+        <div className="space-y-2">
+          <Badge variant="cyan" size="sm" dot>People Leadership Gateway</Badge>
+          <h2 className="text-2xl font-extrabold text-white tracking-tight">
+            People Lead & Manager Clearance Required
+          </h2>
+          <p className="text-xs sm:text-sm text-neutral-400 max-w-md mx-auto leading-relaxed">
+            You are currently accessing this workspace with <strong className="text-white">{role.toUpperCase()}</strong> clearance. To access the team competency heatmap and 1-click intervention nudges, activate People Lead status.
+          </p>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-xs text-neutral-300 space-y-2 text-left">
+          <div className="flex items-center justify-between text-neutral-400">
+            <span>Leadership Account:</span>
+            <span className="text-cyan-300 font-bold">Sarah Chen</span>
+          </div>
+          <div className="flex items-center justify-between text-neutral-400">
+            <span>Corporate Title:</span>
+            <span className="font-mono text-white">Director of Engineering / People Lead</span>
+          </div>
+          <div className="flex items-center justify-between text-neutral-400">
+            <span>Enterprise Email:</span>
+            <span className="font-mono text-emerald-400">sarah.chen@capacityconnect.io</span>
+          </div>
+        </div>
+
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button
+            onClick={() => login("sarah.chen@capacityconnect.io", "Passcode@2026")}
+            className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs shadow-xl shadow-cyan-600/30 transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
+          >
+            <UserCheck className="h-4 w-4" />
+            <span>1-Click Activate People Lead Clearance</span>
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
       </div>
     );
   }

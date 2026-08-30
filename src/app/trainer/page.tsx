@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useAppState } from "@/context/AppStateContext";
-import { Course, ModuleLesson, CalendarSession } from "@/data/capacityData";
+import { useAppState, Course, CalendarSession } from "@/context/AppStateContext";
 import { Badge } from "@/components/ui/Badge";
 import { AIQuizGeneratorModal } from "@/components/courses/AIQuizGeneratorModal";
 import { CoursePlayerModal } from "@/components/courses/CoursePlayerModal";
@@ -27,11 +26,17 @@ import {
   Video,
   Terminal,
   UserCheck,
+  Key,
+  ShieldCheck,
+  Check,
+  FileCode,
+  Sliders,
 } from "lucide-react";
 
 export default function TrainerPortal() {
   const {
     role,
+    login,
     courses,
     competencies,
     learningPaths,
@@ -43,6 +48,7 @@ export default function TrainerPortal() {
     send1on1MentorFeedback,
     scheduleLiveLabWorkshop,
     passQuizAndLevelUp,
+    setDemoToast,
   } = useAppState();
 
   const [showAIQuizModal, setShowAIQuizModal] = useState(false);
@@ -51,7 +57,7 @@ export default function TrainerPortal() {
 
   // Live Broadcast State
   const [selectedCourseForBroadcast, setSelectedCourseForBroadcast] = useState(courses[0]?.id || "");
-  const [broadcastTitle, setBroadcastTitle] = useState("Live Doubt Resolution & Architecture Review");
+  const [broadcastTitle, setBroadcastTitle] = useState("Live Doubt Resolution & Cloud Sandbox Debug");
   const [broadcastMessage, setBroadcastMessage] = useState(
     "Join the virtual cloud sandbox now on Google Cloud Terminal #4. We will debug Istio 503 sidecar timeouts live."
   );
@@ -61,6 +67,30 @@ export default function TrainerPortal() {
   const [mentorFeedbackText, setMentorFeedbackText] = useState(
     "Great progress on Module 1! Review your Cloud Spanner interleaved table keys before attempting the certification exam."
   );
+
+  // Simulated Lab Submissions Review Queue
+  const [labSubmissions, setLabSubmissions] = useState([
+    {
+      id: "sub-1",
+      studentName: "Alex Rivera",
+      studentAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      courseTitle: "Google Cloud: Professional Cloud Architect (30-Day Track)",
+      labName: "Shared VPC & Multi-Zone GKE HPA Config",
+      submittedAt: "10 mins ago",
+      codeSnippet: `apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: payment-service\nspec:\n  replicas: 5\n  template:\n    spec:\n      containers:\n      - name: payment\n        image: gcr.io/prod/payment:v2.1`,
+      status: "pending_review",
+    },
+    {
+      id: "sub-2",
+      studentName: "Devon Reed",
+      studentAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      courseTitle: "Microsoft Azure & Dell PowerStore Hybrid (30-Day Track)",
+      labName: "Dell Cyber Recovery Vault & Air-Gap Policy",
+      submittedAt: "25 mins ago",
+      codeSnippet: `cyber_recovery_policy:\n  vault_mode: air_gapped\n  sync_window: "02:00-04:00 UTC"\n  immutability_retention_days: 30`,
+      status: "pending_review",
+    },
+  ]);
 
   // Workshop Scheduling State
   const [workshopTitle, setWorkshopTitle] = useState("");
@@ -76,14 +106,49 @@ export default function TrainerPortal() {
   const [courseCompId, setCourseCompId] = useState(competencies[0]?.id || "comp-k8s");
   const [courseGainLevel, setCourseGainLevel] = useState(3);
 
+  // IF NOT AUTHENTICATED AS TRAINER: Provide direct 1-Click Clearance Activation bridge!
   if (role !== "trainer") {
     return (
-      <div className="p-8 rounded-3xl border border-rose-500/30 bg-rose-950/20 text-center space-y-4 my-12">
-        <AlertTriangle className="h-10 w-10 text-rose-400 mx-auto" />
-        <h2 className="text-lg font-bold text-white">403 Forbidden: L&D Trainer Clearance Required</h2>
-        <p className="text-xs text-neutral-400 max-w-md mx-auto">
-          You are currently authenticated with <strong>{role.toUpperCase()}</strong> clearance. Curriculum authoring and Live Cohort Mentorship tools are restricted to certified L&D Trainers.
-        </p>
+      <div className="max-w-2xl mx-auto my-12 p-8 rounded-3xl border border-indigo-500/30 bg-gradient-to-b from-[#0e101f] to-[#080911] text-center space-y-6 shadow-2xl">
+        <div className="w-14 h-14 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center mx-auto shadow-lg shadow-indigo-600/20">
+          <Key className="h-7 w-7 animate-pulse" />
+        </div>
+
+        <div className="space-y-2">
+          <Badge variant="purple" size="sm" dot>L&D Trainer Studio Gateway</Badge>
+          <h2 className="text-2xl font-extrabold text-white tracking-tight">
+            Trainer & Curriculum Lead Clearance Required
+          </h2>
+          <p className="text-xs sm:text-sm text-neutral-400 max-w-md mx-auto leading-relaxed">
+            You are currently accessing this workspace with <strong className="text-white">{role.toUpperCase()}</strong> clearance. To broadcast live doubt rooms to enrolled cohorts and author AI quizzes, activate Trainer status.
+          </p>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-xs text-neutral-300 space-y-2 text-left">
+          <div className="flex items-center justify-between text-neutral-400">
+            <span>Trainer Account:</span>
+            <span className="text-indigo-300 font-bold">Marcus Vance</span>
+          </div>
+          <div className="flex items-center justify-between text-neutral-400">
+            <span>Corporate Title:</span>
+            <span className="font-mono text-white">Principal L&D Architect & Fellow</span>
+          </div>
+          <div className="flex items-center justify-between text-neutral-400">
+            <span>Enterprise Email:</span>
+            <span className="font-mono text-emerald-400">marcus.vance@capacityconnect.io</span>
+          </div>
+        </div>
+
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button
+            onClick={() => login("marcus.vance@capacityconnect.io", "Passcode@2026")}
+            className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-xl shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
+          >
+            <ShieldCheck className="h-4 w-4" />
+            <span>1-Click Activate Trainer Clearance</span>
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
       </div>
     );
   }
@@ -98,6 +163,22 @@ export default function TrainerPortal() {
     e.preventDefault();
     if (!mentorFeedbackText.trim()) return;
     send1on1MentorFeedback(selectedLearnerFor1on1, selectedCourseForBroadcast, mentorFeedbackText);
+  };
+
+  const handleGradeSubmission = (submissionId: string, approved: boolean) => {
+    setLabSubmissions((prev) =>
+      prev.map((sub) =>
+        sub.id === submissionId
+          ? { ...sub, status: approved ? "approved" : "changes_requested" }
+          : sub
+      )
+    );
+    setDemoToast({
+      message: approved
+        ? "✅ Practical Lab Submission Approved! +150 XP awarded to student."
+        : "⚠️ Review comments and retry instructions sent to student.",
+      type: approved ? "success" : "warning",
+    });
   };
 
   const handleScheduleWorkshop = (e: React.FormEvent) => {
@@ -205,10 +286,10 @@ export default function TrainerPortal() {
           <div className="space-y-1.5 max-w-2xl">
             <Badge variant="purple" size="sm" dot>L&D Curriculum & Mentorship Studio</Badge>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              Trainer Studio & Live Learner Connect
+              Trainer Studio & Live Cohort Connect
             </h1>
             <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed">
-              Inspired by high-impact academies like NxtWave, RaisingBrains & Scaler: broadcast live doubt sessions to cohorts, send 1:1 mentor feedback, author AI-synthesized certification banks, and inspect all enterprise courses.
+              Inspired by high-impact academies like NxtWave, RaisingBrains & Scaler: broadcast live doubt sessions to cohorts, send 1:1 mentor feedback, grade student code labs, author AI-synthesized certification banks, and inspect all enterprise courses.
             </p>
           </div>
 
@@ -343,6 +424,88 @@ export default function TrainerPortal() {
               <Send className="h-3.5 w-3.5" /> Dispatch 1:1 Mentor Guidance
             </button>
           </form>
+        </div>
+      </section>
+
+      {/* STUDENT PRACTICAL LAB REVIEW & CODE GRADING QUEUE (Next-Level Feature) */}
+      <section id="grading" className="space-y-4 pt-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-mono uppercase text-emerald-400 font-bold">
+              Assessment Workflows
+            </span>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <FileCode className="h-5 w-5 text-emerald-400" />
+              Student Practical Lab Grading & Code Review Queue ({labSubmissions.length})
+            </h2>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {labSubmissions.map((sub) => (
+            <div
+              key={sub.id}
+              className="rounded-3xl border border-white/10 bg-[#090b14]/90 p-6 space-y-4 shadow-xl flex flex-col justify-between"
+            >
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={sub.studentAvatar}
+                      alt={sub.studentName}
+                      className="w-9 h-9 rounded-full object-cover border border-white/10"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-white block">{sub.studentName}</span>
+                      <span className="text-[10px] text-neutral-400 font-mono">{sub.submittedAt}</span>
+                    </div>
+                  </div>
+                  <Badge
+                    variant={sub.status === "approved" ? "success" : sub.status === "changes_requested" ? "warning" : "purple"}
+                    size="sm"
+                  >
+                    {sub.status === "approved"
+                      ? "Graded (100% Honors)"
+                      : sub.status === "changes_requested"
+                      ? "Changes Requested"
+                      : "Pending Review"}
+                  </Badge>
+                </div>
+
+                <div className="space-y-1">
+                  <span className="text-xs font-bold text-indigo-300 block">{sub.labName}</span>
+                  <span className="text-[10px] text-neutral-400 font-mono block truncate">
+                    Course: {sub.courseTitle}
+                  </span>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-black/60 border border-white/5 font-mono text-[11px] text-emerald-300 overflow-x-auto">
+                  <pre className="whitespace-pre">{sub.codeSnippet}</pre>
+                </div>
+              </div>
+
+              {sub.status === "pending_review" ? (
+                <div className="pt-2 flex items-center gap-2">
+                  <button
+                    onClick={() => handleGradeSubmission(sub.id, true)}
+                    className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/30 transition-all"
+                  >
+                    <Check className="h-3.5 w-3.5" /> Approve & Award XP
+                  </button>
+                  <button
+                    onClick={() => handleGradeSubmission(sub.id, false)}
+                    className="px-3 py-2 rounded-xl bg-white/5 hover:bg-rose-500/20 text-neutral-300 hover:text-rose-300 border border-white/10 text-xs font-medium transition-colors"
+                  >
+                    Request Fixes
+                  </button>
+                </div>
+              ) : (
+                <div className="pt-2 text-center text-xs font-mono text-neutral-400">
+                  Review finalized. Synchronized to student Skill Radar.
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </section>
 
