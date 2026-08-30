@@ -39,6 +39,7 @@ export default function LearnerPortal() {
     badges,
     sessions,
     passQuizAndLevelUp,
+    submitAssignment,
     upvoteArticle,
     askExpertQuestion,
     addNewArticle,
@@ -238,9 +239,14 @@ export default function LearnerPortal() {
 
                 <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
                   <div className="space-y-1.5">
-                    <span className="text-[10px] font-mono text-neutral-400 uppercase">
-                      {course.category} · {course.duration}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                        {course.provider}
+                      </span>
+                      <span className="text-[10px] font-mono text-neutral-400">
+                        {course.duration}
+                      </span>
+                    </div>
                     <h3 className="text-sm font-bold text-white group-hover:text-indigo-300 transition-colors leading-snug">
                       {course.title}
                     </h3>
@@ -412,6 +418,9 @@ export default function LearnerPortal() {
           course={activeCourseToPlay}
           onClose={() => setActiveCourseToPlay(null)}
           onPassQuiz={(cId, score) => passQuizAndLevelUp(cId, score)}
+          onSubmitAssignment={(cId, aId, code, passed) =>
+            submitAssignment(cId, aId, code, passed)
+          }
         />
       )}
     </div>

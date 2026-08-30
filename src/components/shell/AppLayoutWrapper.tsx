@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { AppSidebar } from "@/components/shell/AppSidebar";
 import { AppHeader } from "@/components/shell/AppHeader";
 import { CommandPalette } from "@/components/shell/CommandPalette";
-import { DemoControlBar } from "@/components/shell/DemoControlBar";
+import { SystemSyncHUD } from "@/components/shell/SystemSyncHUD";
 
 export const AppLayoutWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const pathname = usePathname();
@@ -20,8 +20,8 @@ export const AppLayoutWrapper: React.FC<{ children: React.ReactNode }> = ({ chil
       {/* Global Command Palette (Ctrl+K) */}
       <CommandPalette />
 
-      {/* Floating Demo Control Bar for Judges & Evaluators */}
-      <DemoControlBar />
+      {/* Real-Time System Health & Sync HUD */}
+      {!isStandalonePage && <SystemSyncHUD />}
 
       {isStandalonePage ? (
         <main className="flex-1">{children}</main>

@@ -3,7 +3,7 @@
 import React, { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useAppState, RoleType, DEMO_USERS } from "@/context/AppStateContext";
+import { useAppState, RoleType, UserProfile } from "@/context/AppStateContext";
 import { Badge } from "@/components/ui/Badge";
 import {
   Sparkles,
@@ -15,6 +15,7 @@ import {
   ArrowRight,
   ShieldCheck,
   CheckCircle2,
+  AlertTriangle,
   Grid,
   Zap,
   Target,
@@ -31,7 +32,7 @@ function SignupContent() {
   const searchParams = useSearchParams();
   const initialRoleParam = searchParams?.get("role") as RoleType | null;
 
-  const { login, setDemoToast } = useAppState();
+  const { registerUser, setDemoToast, competencies } = useAppState();
 
   const [selectedRole, setSelectedRole] = useState<RoleType>(
     initialRoleParam === "manager" ||
@@ -46,44 +47,49 @@ function SignupContent() {
   const [password, setPassword] = useState("");
   const [department, setDepartment] = useState("Engineering");
   const [jobTitle, setJobTitle] = useState("Junior Software Engineer");
+  const [baselineSkillLevel, setBaselineSkillLevel] = useState<number>(2);
   const [showPassword, setShowPassword] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleRoleSelect = (role: RoleType) => {
     setSelectedRole(role);
+    setValidationError(null);
     if (role === "learner") {
       setJobTitle("Junior Software Engineer");
       setDepartment("Engineering");
     } else if (role === "manager") {
-      setJobTitle("Engineering Manager / Team Lead");
-      setDepartment("Engineering & Platform");
+      setJobTitle("Engineering Manager / People Lead");
+      setDepartment("Engineering Leadership");
     } else if (role === "trainer") {
       setJobTitle("Technical Curriculum Architect");
-      setDepartment("Talent Development");
+      setDepartment("Curriculum & Talent Development");
     } else if (role === "admin") {
       setJobTitle("Enterprise Learning Administrator");
-      setDepartment("People Operations");
+      setDepartment("Executive & People Operations");
     }
   };
 
   const handlePreFill = (role: RoleType) => {
     setSelectedRole(role);
+    setValidationError(null);
     if (role === "learner") {
       setFullName("Maya Patel");
       setEmail("maya.patel@capacityconnect.io");
       setDepartment("Engineering");
-      setJobTitle("Fullstack Developer");
+      setJobTitle("Fullstack Developer (L2)");
       setPassword("Passcode@2026");
+      setBaselineSkillLevel(3);
     } else if (role === "manager") {
       setFullName("David Miller");
       setEmail("david.miller@capacityconnect.io");
       setDepartment("Product & Design");
-      setJobTitle("Director of Product");
+      setJobTitle("Director of Product & Engineering");
       setPassword("Passcode@2026");
     } else if (role === "trainer") {
       setFullName("Clara Hughes");
       setEmail("clara.hughes@capacityconnect.io");
-      setDepartment("Talent Development");
+      setDepartment("Curriculum & Talent Development");
       setJobTitle("Lead L&D Specialist");
       setPassword("Passcode@2026");
     } else {
@@ -97,13 +103,60 @@ function SignupContent() {
 
   const handleSignupSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setValidationError(null);
+
+    // Strict Field Validations
+    if (!fullName.trim() || fullName.trim().length < 3) {
+      setValidationError("Please provide a valid full name (minimum 3 characters).");
+      return;
+    }
+
+    if (!email.trim() || !email.includes("@") || !email.includes(".")) {
+      setValidationError("Please enter a valid corporate or enterprise email address.");
+      return;
+    }
+
+    if (!password || password.length < 6) {
+      setValidationError("Password must be at least 6 characters in length.");
+      return;
+    }
+
     setIsSubmitting(true);
+
     setTimeout(() => {
-      login(selectedRole);
+      // Build real user profile
+      const newUserId = `usr-${Date.now()}`;
+      const newUser: UserProfile = {
+        id: newUserId,
+        name: fullName.trim(),
+        email: email.trim().toLowerCase(),
+        password: password,
+        avatar: `https://images.unsplash.com/photo-${1534528741775 + Math.floor(Math.random() * 1000)}?w=150&auto=format&fit=crop&q=80`,
+        role: selectedRole,
+        department,
+        jobRoleId: selectedRole === "manager" ? "role-sr-cloud-arch" : "role-fullstack-l2",
+        jobTitle,
+        organization: "Capacity Connect Enterprise",
+        employeeId: `EMP-${department.slice(0, 3).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`,
+        points: 500,
+        streakDays: 1,
+        completedCoursesCount: 0,
+        competencies: competencies.slice(0, 6).map((c) => ({
+          competencyId: c.id,
+          currentLevel: Math.max(1, baselineSkillLevel),
+          lastAssessedAt: "Initial Setup",
+          verifiedBy: "Self-Reported Baseline",
+          scorePercent: 70,
+        })),
+      };
+
+      registerUser(newUser);
+
       setDemoToast({
-        message: `Welcome to Capacity Connect, ${fullName || DEMO_USERS[selectedRole].name}! Your ${selectedRole.toUpperCase()} account has been provisioned.`,
+        message: `Account created for ${newUser.name}! Your ${selectedRole.toUpperCase()} workspace is now provisioned.`,
         type: "success",
       });
+
       router.push(`/${selectedRole}`);
     }, 700);
   };
@@ -111,14 +164,13 @@ function SignupContent() {
   const roleMeta = {
     learner: {
       title: "Employee Learner Account",
-      desc: "Gain instant access to personal Skill Radars, AI gap analysis, course workbenches, and verifiable certificates.",
+      desc: "Gain instant access to personal Skill Radars, AI gap analysis, MNC course workbenches, and verifiable certificates.",
       badge: "Learner RBAC",
       badgeColor: "success" as const,
       color: "from-emerald-500/20 to-indigo-500/10 border-emerald-500/30",
       btnColor: "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/30",
-      icon: User,
       perks: [
-        "Live 1-5 Skill Radar baseline assessment",
+        "Live 1-5 Skill Radar baseline mapping",
         "Personalized AI Career Gap Advisor",
         "Auto-issued cryptographic certificates",
       ],
@@ -130,7 +182,6 @@ function SignupContent() {
       badgeColor: "cyan" as const,
       color: "from-cyan-500/20 to-indigo-500/10 border-cyan-500/30",
       btnColor: "bg-cyan-600 hover:bg-cyan-500 shadow-cyan-600/30",
-      icon: Grid,
       perks: [
         "Team-wide competency heatmap access",
         "1-Click Manager Nudge system",
@@ -144,7 +195,6 @@ function SignupContent() {
       badgeColor: "purple" as const,
       color: "from-indigo-500/20 to-cyan-500/10 border-indigo-500/30",
       btnColor: "bg-indigo-600 hover:bg-indigo-500 shadow-indigo-600/30",
-      icon: GraduationCap,
       perks: [
         "AI Quiz Generator from raw documentation",
         "Curriculum & learning path authoring",
@@ -158,7 +208,6 @@ function SignupContent() {
       badgeColor: "purple" as const,
       color: "from-violet-500/20 to-indigo-500/10 border-violet-500/30",
       btnColor: "bg-violet-600 hover:bg-violet-500 shadow-violet-600/30",
-      icon: Building2,
       perks: [
         "Master Competency Framework editor (L1-L5)",
         "Enterprise-wide heatmap & ROI analytics",
@@ -166,8 +215,6 @@ function SignupContent() {
       ],
     },
   }[selectedRole];
-
-  const RoleIcon = roleMeta.icon;
 
   return (
     <div className="min-h-screen bg-[#05060a] text-neutral-100 flex flex-col justify-between selection:bg-indigo-500/30 selection:text-indigo-200">
@@ -226,10 +273,10 @@ function SignupContent() {
               ))}
             </div>
 
-            {/* Judge 1-Click Fast Pre-Fill */}
+            {/* 1-Click Fast Pre-Fill */}
             <div className="pt-4 border-t border-white/10 space-y-2">
               <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 block">
-                1-Click Demo Pre-Fill:
+                1-Click Fast Sample Pre-Fill:
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <button
@@ -331,6 +378,14 @@ function SignupContent() {
                 </div>
               </div>
 
+              {/* Validation Error Alert */}
+              {validationError && (
+                <div className="p-3.5 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2.5 animate-in fade-in duration-200">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-rose-400" />
+                  <span>{validationError}</span>
+                </div>
+              )}
+
               {/* Signup Form */}
               <form onSubmit={handleSignupSubmit} className="space-y-4 text-xs">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -350,7 +405,7 @@ function SignupContent() {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="font-medium text-neutral-300">Enterprise Email</label>
+                    <label className="font-medium text-neutral-300">Enterprise Corporate Email</label>
                     <div className="relative">
                       <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-500" />
                       <input
@@ -378,14 +433,14 @@ function SignupContent() {
                         <option value="Engineering">Engineering</option>
                         <option value="Product & Design">Product & Design</option>
                         <option value="Operations & Security">Operations & Security</option>
-                        <option value="Talent Development">Talent Development</option>
-                        <option value="People Operations">People Operations</option>
+                        <option value="Curriculum & Talent Development">Curriculum & Talent Development</option>
+                        <option value="Executive & People Operations">Executive & People Operations</option>
                       </select>
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="font-medium text-neutral-300">Job Role / Title</label>
+                    <label className="font-medium text-neutral-300">Job Title / Designation</label>
                     <div className="relative">
                       <Briefcase className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-500" />
                       <input
@@ -399,17 +454,41 @@ function SignupContent() {
                   </div>
                 </div>
 
+                {selectedRole === "learner" && (
+                  <div className="space-y-1.5 p-3 rounded-2xl bg-black/40 border border-white/10">
+                    <div className="flex items-center justify-between">
+                      <label className="font-medium text-neutral-300">
+                        Self-Assessed Baseline Skill Level
+                      </label>
+                      <span className="font-mono text-emerald-400 font-bold">
+                        Level {baselineSkillLevel} / 5
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={1}
+                      max={5}
+                      value={baselineSkillLevel}
+                      onChange={(e) => setBaselineSkillLevel(Number(e.target.value))}
+                      className="w-full accent-emerald-500 cursor-pointer"
+                    />
+                    <span className="text-[10px] text-neutral-500 block">
+                      Initializes your live Skill Radar polygon across 6 baseline competencies.
+                    </span>
+                  </div>
+                )}
+
                 <div className="space-y-1">
-                  <label className="font-medium text-neutral-300">Security Password</label>
+                  <label className="font-medium text-neutral-300">Security Password (Min 6 Chars)</label>
                   <div className="relative">
                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-500" />
                     <input
                       type={showPassword ? "text" : "password"}
                       required
-                      placeholder="Minimum 8 characters"
+                      placeholder="Enter strong password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-white/[0.04] border border-white/10 rounded-xl pl-9 pr-10 py-2.5 text-white placeholder-neutral-500 focus:outline-none focus:border-indigo-500"
+                      className="w-full bg-white/[0.04] border border-white/10 rounded-xl pl-9 pr-10 py-2.5 text-white placeholder-neutral-500 focus:outline-none focus:border-indigo-500 font-mono"
                     />
                     <button
                       type="button"
@@ -423,20 +502,20 @@ function SignupContent() {
 
                 <div className="flex items-center justify-between text-[11px] text-neutral-400 pt-1">
                   <span className="flex items-center gap-1 text-emerald-400">
-                    <ShieldCheck className="h-3.5 w-3.5" /> RBAC Policy v2.4 Compliant
+                    <ShieldCheck className="h-3.5 w-3.5" /> Enterprise RBAC Policy Compliant
                   </span>
-                  <span>Instant Setup · No Credit Card Required</span>
+                  <span>Instant Account Provisioning</span>
                 </div>
 
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className={`w-full py-3.5 rounded-2xl text-white text-xs sm:text-sm font-bold shadow-xl transition-all flex items-center justify-center gap-2 hover:scale-[1.02] ${roleMeta.btnColor}`}
+                  className={`w-full py-3.5 rounded-2xl text-white text-xs sm:text-sm font-bold shadow-xl transition-all flex items-center justify-center gap-2 hover:scale-[1.01] ${roleMeta.btnColor}`}
                 >
                   <UserPlus className="h-4 w-4" />
                   {isSubmitting
-                    ? "Provisioning RBAC Clearance..."
-                    : `Create ${roleMeta.title}`}
+                    ? "Provisioning Account & Generating Skill Radar..."
+                    : `Create & Initialize ${roleMeta.title}`}
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </form>
@@ -447,7 +526,7 @@ function SignupContent() {
 
       {/* Footer */}
       <footer className="py-6 px-6 text-center text-xs text-neutral-500 border-t border-white/5">
-        <p>CAPACITY CONNECT · Digital Capacity Building & Learning Management Portal · Role-Based Security</p>
+        <p>CAPACITY CONNECT · Digital Capacity Building & Learning Management Portal · Real-Time Registration Engine</p>
       </footer>
     </div>
   );

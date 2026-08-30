@@ -40,6 +40,7 @@ export default function TrainerPortal() {
     const newCourse: Course = {
       id: `crs-${Date.now()}`,
       title: courseTitle,
+      provider: "Google Cloud",
       description: courseDesc,
       category: "Cloud & Infrastructure",
       competencyIds: [courseCompId],

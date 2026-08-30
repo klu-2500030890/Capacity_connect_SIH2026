@@ -172,7 +172,7 @@ export const KnowledgeHub: React.FC<KnowledgeHubProps> = ({
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex flex-wrap gap-1">
-                      {art.competencyTags.map((tag, idx) => (
+                      {(art.tags || []).map((tag, idx) => (
                         <span
                           key={idx}
                           className="px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 text-[10px] font-mono font-medium truncate max-w-[180px]"
